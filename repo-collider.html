@@ -158,6 +158,26 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
 #modal-overlay{position:fixed;inset:0;background:#000000b0;backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;animation:fadeIn .15s ease}
 #modal-overlay.open{display:flex}
+
+/* ── AUTH OVERLAY ── */
+#auth-overlay{position:fixed;inset:0;background:#06080d;z-index:300;display:none;align-items:center;justify-content:center;animation:fadeIn .2s ease}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:380px;box-shadow:0 24px 80px #0005}
+.auth-tabs{display:flex;gap:2px;background:var(--surface-2);padding:3px;border-radius:var(--radius);margin-bottom:16px}
+.auth-tab{background:none;border:none;color:var(--dim);font-family:var(--font);font-size:12px;font-weight:500;padding:6px 16px;border-radius:5px;cursor:pointer;flex:1;transition:all .15s}
+.auth-tab.active{background:var(--bg);color:var(--text)}
+.auth-form{display:flex;flex-direction:column;gap:10px}
+.auth-input{background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:13px;padding:10px 12px;border-radius:var(--radius);outline:none;transition:border-color .15s}
+.auth-input:focus{border-color:var(--accent)}
+.auth-input::placeholder{color:var(--muted)}
+.auth-btn{background:linear-gradient(135deg,var(--accent),#4f46e5);border:none;color:#fff;font-family:var(--font);font-size:13px;font-weight:600;padding:10px;border-radius:var(--radius);cursor:pointer;transition:all .2s;letter-spacing:.3px}
+.auth-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 20px #6366f140}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.auth-error{font-size:11px;color:var(--red);min-height:16px}
+#user-badge{display:none;align-items:center;gap:8px;flex-shrink:0}
+#user-badge .email{font-size:10px;color:var(--dim)}
+#user-badge .slot{font-size:8px;color:var(--green);font-weight:600}
+.logout-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);font-family:var(--font);font-size:9px;font-weight:500;padding:4px 10px;border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
 #modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:780px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px #0005;animation:slideUp .2s ease}
 #modal-header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
 #modal-title{font-size:15px;font-weight:700;flex:1;line-height:1.3}
@@ -240,6 +260,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <button class="nav-tab" onclick="switchView('stats')">Stats</button>
     </div>
     <div id="api-wrap">
+      <div id="user-badge">
+        <span class="email" id="user-email"></span>
+        <span class="slot" id="user-slot">✓</span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
       <span id="brain-label">Brain</span>
       <select id="provider-select" onchange="switchProvider(this.value)"></select>
       <select id="model-select" onchange="switchModel(this.value)"></select>
@@ -309,6 +334,33 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
   </div>
 </div>
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="logo" style="justify-content:center;margin-bottom:16px">
+      <div class="logo-icon">⚡</div>
+      Repo&nbsp;Collider
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+    </div>
+    <div id="auth-forms">
+      <div class="auth-form" id="login-form">
+        <input class="auth-input" id="login-email" type="email" placeholder="Email" autocomplete="email" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <input class="auth-input" id="login-password" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <button class="auth-btn" id="login-btn" onclick="doLogin()">Login</button>
+        <div class="auth-error" id="login-error"></div>
+      </div>
+      <div class="auth-form" id="register-form" style="display:none">
+        <input class="auth-input" id="register-email" type="email" placeholder="Email" autocomplete="email" onkeydown="if(event.key==='Enter')doRegister()"/>
+        <input class="auth-input" id="register-password" type="password" placeholder="Password (6+ chars)" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()"/>
+        <button class="auth-btn" id="register-btn" onclick="doRegister()">Register</button>
+        <div class="auth-error" id="register-error"></div>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:10px;color:var(--dim);text-align:center">⚡ 100 accounts only · first come first serve</div>
+  </div>
+</div>
 <div id="modal-overlay" onclick="if(event.target===this)closeModal()">
   <div id="modal">
     <div id="modal-header">
@@ -351,6 +403,127 @@ const S = {
 
 function saveIdeas() {
   localStorage.setItem('rc-ideas', JSON.stringify(S.ideas));
+}
+
+// ── AUTH ──
+const A = {
+  token: localStorage.getItem('rc-auth-token') || '',
+  user: null,
+  authed: false,
+};
+
+async function initAuth() {
+  if (!A.token) { showAuth(); return false; }
+  try {
+    const res = await fetch('/api/auth/me', { headers: { 'authorization': 'Bearer ' + A.token } });
+    if (!res.ok) throw new Error('Not authed');
+    const data = await res.json();
+    A.user = data.user; A.authed = true;
+    hideAuth();
+    loadRemoteIdeas();
+    return true;
+  } catch(e) {
+    A.token = ''; localStorage.removeItem('rc-auth-token');
+    showAuth();
+    return false;
+  }
+}
+
+function showAuth() {
+  $('auth-overlay').style.display = 'flex';
+  $('app').style.display = 'none';
+}
+function hideAuth() {
+  $('auth-overlay').style.display = 'none';
+  $('app').style.display = 'grid';
+  if (A.user) {
+    $('user-badge').style.display = 'flex';
+    $('user-email').textContent = A.user.email;
+  }
+}
+
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.auth-tab[onclick*="${tab}"]`).classList.add('active');
+  $('login-form').style.display = tab === 'login' ? '' : 'none';
+  $('register-form').style.display = tab === 'register' ? '' : 'none';
+}
+
+async function doLogin() {
+  const email = $('login-email').value.trim();
+  const password = $('login-password').value;
+  if (!email || !password) { $('login-error').textContent = 'Fill in all fields'; return; }
+  const btn = $('login-btn');
+  btn.textContent = 'Logging in…'; btn.disabled = true; $('login-error').textContent = '';
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Login failed');
+    A.token = data.token; A.user = data.user; A.authed = true;
+    localStorage.setItem('rc-auth-token', data.token);
+    hideAuth();
+    loadRemoteIdeas();
+  } catch(e) { $('login-error').textContent = e.message; }
+  btn.textContent = 'Login'; btn.disabled = false;
+}
+
+async function doRegister() {
+  const email = $('register-email').value.trim();
+  const password = $('register-password').value;
+  if (!email || !password) { $('register-error').textContent = 'Fill in all fields'; return; }
+  const btn = $('register-btn');
+  btn.textContent = 'Registering…'; btn.disabled = true; $('register-error').textContent = '';
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Registration failed');
+    A.token = data.token; A.user = data.user; A.authed = true;
+    localStorage.setItem('rc-auth-token', data.token);
+    hideAuth();
+    showToast('🎉 Welcome!');
+  } catch(e) { $('register-error').textContent = e.message; }
+  btn.textContent = 'Register'; btn.disabled = false;
+}
+
+function logout() {
+  A.token = ''; A.user = null; A.authed = false;
+  localStorage.removeItem('rc-auth-token');
+  showAuth();
+}
+
+async function syncIdeas() {
+  if (!A.token) return;
+  try {
+    await fetch('/api/ideas/sync', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'authorization': 'Bearer ' + A.token },
+      body: JSON.stringify({ ideas: S.ideas }),
+    });
+  } catch(e) {}
+}
+
+async function loadRemoteIdeas() {
+  if (!A.token) return;
+  try {
+    const res = await fetch('/api/ideas/sync', {
+      headers: { 'authorization': 'Bearer ' + A.token },
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.ideas && data.ideas.length > 0) {
+      S.ideas = data.ideas;
+      saveIdeas();
+      renderIdeas();
+      if (S.currentView === 'stats') renderStats();
+      if (S.currentView === 'saved') renderSavedView();
+    }
+  } catch(e) {}
 }
 
 // ── HASH IMPORT (for one-click migration from localhost) ──
@@ -646,6 +819,8 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 
 // ── INIT ──
 async function init(){
+  const authed = await initAuth();
+  if (!authed) { updateGenBtn(); return; }
   renderProviderSelect();
   renderModelSelect();
   restoreApiKey();
@@ -1075,6 +1250,7 @@ originality(0–30) + market_size(0–25) + buildability(0–25) + wow_factor(0�
     renderIdeas();
     updateProgress(3, 'Done');
     endProgress();
+    syncIdeas();
   }catch(e){
     showToast('❌ '+e.message.slice(0,80));
     endProgress(e.message.slice(0,60));
@@ -1398,7 +1574,6 @@ function showToast(msg){
 
 // ── BOOT ──
 init();
-$('saved-count-badge').textContent=S.savedIds.size||'';
 </script>
 </body>
 </html>

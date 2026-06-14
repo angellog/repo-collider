@@ -3,8 +3,11 @@
   "buildCommand": null,
   "outputDirectory": ".",
   "rewrites": [
-    { "source": "/zen-proxy/(.*)", "destination": "/api/proxy" },
-    { "source": "/gh-proxy/(.*)", "destination": "/api/proxy" },
-    { "source": "/(.*)", "destination": "/repo-collider.html" }
+    { "source": "/api/(.*)", "destination": "/api/proxy" },
+    { "source": "/", "destination": "/api/proxy" },
+    { "source": "/repo-collider.html", "destination": "/api/proxy" },
+    { "source": "/migrate", "destination": "/api/proxy" },
+    { "source": "/migrate.html", "destination": "/api/proxy" },
+    { "source": "/(.*)", "destination": "/api/proxy" }
   ]
 }

@@ -1,0 +1,16 @@
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#06080d;--surface:#0b0f17;--surface-2:#111827;--surface-3:#1a2332;--border:#1e293b;--border-hover:#334155;--muted:#475569;--dim:#64748b;--text:#e2e8f0;--text-2:#94a3b8;--accent:#6366f1;--accent-h:#818cf8;--accent-dim:#6366f118;--green:#4ade80;--yellow:#facc15;--orange:#fb923c;--pink:#f472b6;--teal:#2dd4bf;--red:#fb7185;--radius:8px;--radius-sm:5px;--radius-lg:12px;--font:'Inter',-apple-system,sans-serif;--mono:'JetBrains Mono',monospace}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:13.5px;line-height:1.6;-webkit-font-smoothing:antialiased}
+#root{height:100%}
+::selection{background:var(--accent);color:#fff}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-hover);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes progressIndeterminate{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+@keyframes progPulse{0%,100%{opacity:1}50%{opacity:.4}}
