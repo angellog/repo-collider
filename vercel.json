@@ -1,4 +1,7 @@
 {
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": ".",
   "rewrites": [
     { "source": "/zen-proxy/(.*)", "destination": "/api/proxy" },
     { "source": "/gh-proxy/(.*)", "destination": "/api/proxy" },
