@@ -278,7 +278,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <button class="sort-btn" id="sort-score" onclick="setSort('score',this)">Score ↓</button>
         <button class="sort-btn active" id="sort-recent" onclick="setSort('recent',this)">Recent</button>
         <span id="idea-count"></span>
-        <button id="export-btn" onclick="exportCSV()">↓ Export</button>
+        <button id="export-btn" onclick="exportCSV()">↓ CSV</button>
+        <button class="sort-btn" onclick="exportAllData()" title="Export all data as JSON backup" style="color:var(--teal)">📦 Export</button>
+        <button class="sort-btn" onclick="document.getElementById('import-file').click()" title="Import data from JSON backup" style="color:var(--yellow)">📥 Import</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importAllData(event)"/>
       </div>
       <div id="progress-wrap" style="display:none">
         <div id="progress-bar-bg"><div id="progress-bar-fill"></div></div>
@@ -1214,6 +1217,47 @@ function exportCSV(){
   const b=new Blob([csv],{type:'text/csv'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='repo-collider-ideas.csv';a.click();
   showToast('📥 CSV downloaded');
+}
+
+function exportAllData(){
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('rc-'));
+  const data = {};
+  keys.forEach(k => {
+    try { data[k] = JSON.parse(localStorage.getItem(k)); }
+    catch(e) { data[k] = localStorage.getItem(k); }
+  });
+  data._exportedAt = new Date().toISOString();
+  data._version = 'repo-collider-v2';
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `repo-collider-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  showToast('📦 All data exported');
+}
+
+function importAllData(event){
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const data = JSON.parse(e.target.result);
+      let count = 0;
+      Object.entries(data).forEach(([key, val]) => {
+        if (key.startsWith('rc-')) {
+          localStorage.setItem(key, JSON.stringify(val));
+          count++;
+        }
+      });
+      showToast(`📥 Imported ${count} keys — reloading…`);
+      setTimeout(() => location.reload(), 1200);
+    } catch(err) {
+      showToast('❌ Invalid backup file: ' + err.message.slice(0, 40));
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
 }
 
 // ── BUILD ──
