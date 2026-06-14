@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Migrating…</title>
+<style>
+body{background:#06080d;color:#e2e8f0;font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;flex-direction:column;gap:12px;text-align:center;padding:20px}
+.spinner{width:28px;height:28px;border:3px solid #1e293b;border-top-color:#6366f1;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{color:#fb7185;font-size:14px;max-width:500px;line-height:1.6}
+.success{color:#4ade80}
+.hint{color:#64748b;font-size:12px}
+a{color:#818cf8}
+</style>
+</head>
+<body>
+<div class="spinner" id="spinner"></div>
+<div id="status">Reading your local data…</div>
+
+<script>
+(async function(){
+  const status = document.getElementById('status');
+  const spinner = document.getElementById('spinner');
+
+  try {
+    // Collect all rc-* keys from localStorage
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('rc-'));
+    if (!keys.length) {
+      spinner.remove();
+      status.innerHTML = '<div class="error">No Repo Collider data found in localStorage.</div><div class="hint">Make sure you\'ve used the app at <a href="/">localhost:3000</a> first.</div>';
+      return;
+    }
+
+    const data = {};
+    let totalSize = 0;
+    keys.forEach(k => {
+      const raw = localStorage.getItem(k);
+      try { data[k] = JSON.parse(raw); } catch(e) { data[k] = raw; }
+      totalSize += raw ? raw.length : 0;
+    });
+    data._exportedAt = new Date().toISOString();
+    data._version = 'repo-collider-v2';
+
+    const json = JSON.stringify(data);
+    const encoded = btoa(unescape(encodeURIComponent(json)));
+
+    status.textContent = `Packaging ${keys.length} keys (${(json.length/1024).toFixed(1)}KB raw, ${(encoded.length/1024).toFixed(1)}KB encoded)…`;
+
+    // URL length limit — Chrome supports ~100KB, but be safe at 80KB
+    if (encoded.length > 80000) {
+      spinner.remove();
+      status.innerHTML = '<div class="error">Data too large (' + (encoded.length/1024).toFixed(1) + 'KB encoded). Maximum is 80KB.</div><div class="hint">Use <strong>📦 Export</strong> on localhost → <strong>📥 Import</strong> on the deployed site instead.</div>';
+      return;
+    }
+
+    status.textContent = 'Redirecting to deployed app…';
+    await new Promise(r => setTimeout(r, 300));
+    window.location.href = 'https://rc-deploy-chi.vercel.app/#import:' + encoded;
+
+  } catch(e) {
+    spinner.remove();
+    status.innerHTML = '<div class="error">❌ ' + e.message.slice(0, 80) + '</div>';
+  }
+})();
+</script>
+</body>
+</html>

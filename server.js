@@ -5,6 +5,7 @@ const path = require('path');
 
 const PORT = 3000;
 const HTML_FILE = path.resolve(__dirname, 'repo-collider.html');
+const MIGRATE_FILE = path.resolve(__dirname, 'migrate.html');
 
 const MIME = {
   '.html': 'text/html',
@@ -95,6 +96,11 @@ const server = http.createServer((req, res) => {
 
   if (req.url === '/' || req.url === '/repo-collider.html') {
     serveStatic(res, HTML_FILE);
+    return;
+  }
+
+  if (req.url === '/migrate' || req.url === '/migrate.html') {
+    serveStatic(res, MIGRATE_FILE);
     return;
   }
 

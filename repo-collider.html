@@ -353,6 +353,30 @@ function saveIdeas() {
   localStorage.setItem('rc-ideas', JSON.stringify(S.ideas));
 }
 
+// ── HASH IMPORT (for one-click migration from localhost) ──
+(function(){
+  if (!window.location.hash.startsWith('#import:')) return;
+  try {
+    const encoded = window.location.hash.slice(8);
+    const json = decodeURIComponent(escape(atob(encoded)));
+    const data = JSON.parse(json);
+    let count = 0;
+    Object.entries(data).forEach(([key, val]) => {
+      if (key.startsWith('rc-')) {
+        localStorage.setItem(key, JSON.stringify(val));
+        count++;
+      }
+    });
+    // Clear hash so page loads clean from imported data
+    window.location.hash = '';
+    console.log(`Hash-imported ${count} keys`);
+    // Reload after a tick so Reactivity picks up fresh localStorage
+    setTimeout(() => location.reload(), 100);
+  } catch(e) {
+    console.error('Hash import failed:', e);
+  }
+})();
+
 // ── PROVIDERS ──
 const PROVIDERS = [
   {id:'fireworks',name:'Fireworks AI',color:'#ff6b35',
