@@ -104,6 +104,26 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // POST endpoint: save localStorage backup from migrate page
+  if (req.url === '/api/backup' && req.method === 'POST') {
+    let body = '';
+    req.on('data', c => body += c);
+    req.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        const filePath = path.resolve(__dirname, 'backup-data.json');
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+        console.log('Backup saved to', filePath);
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ok:true, keys: Object.keys(data).filter(k=>k.startsWith('rc-')).length}));
+      } catch(e) {
+        res.writeHead(400, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ok:false, error: e.message}));
+      }
+    });
+    return;
+  }
+
   res.writeHead(404);
   res.end('Not found');
 });

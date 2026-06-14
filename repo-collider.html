@@ -367,13 +367,34 @@ function saveIdeas() {
         count++;
       }
     });
-    // Clear hash so page loads clean from imported data
     window.location.hash = '';
     console.log(`Hash-imported ${count} keys`);
-    // Reload after a tick so Reactivity picks up fresh localStorage
     setTimeout(() => location.reload(), 100);
   } catch(e) {
     console.error('Hash import failed:', e);
+  }
+})();
+
+// ── FILE IMPORT (for deploying backup alongside the app) ──
+(async function(){
+  if (!window.location.search.includes('import')) return;
+  try {
+    const res = await fetch('./backup-data.json');
+    if (!res.ok) return;
+    const data = await res.json();
+    let count = 0;
+    Object.entries(data).forEach(([key, val]) => {
+      if (key.startsWith('rc-')) {
+        localStorage.setItem(key, JSON.stringify(val));
+        count++;
+      }
+    });
+    console.log(`File-imported ${count} keys`);
+    // Clean URL and reload
+    window.history.replaceState({}, '', window.location.pathname);
+    setTimeout(() => location.reload(), 100);
+  } catch(e) {
+    console.error('File import failed:', e);
   }
 })();
 

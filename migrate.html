@@ -23,39 +23,45 @@ a{color:#818cf8}
   const spinner = document.getElementById('spinner');
 
   try {
-    // Collect all rc-* keys from localStorage
     const keys = Object.keys(localStorage).filter(k => k.startsWith('rc-'));
     if (!keys.length) {
       spinner.remove();
-      status.innerHTML = '<div class="error">No Repo Collider data found in localStorage.</div><div class="hint">Make sure you\'ve used the app at <a href="/">localhost:3000</a> first.</div>';
+      status.innerHTML = '<div class="error">No Repo Collider data found in localStorage.</div><div class="hint">Use the app at <a href="/">localhost:3000</a> to generate ideas first.</div>';
       return;
     }
 
     const data = {};
-    let totalSize = 0;
     keys.forEach(k => {
-      const raw = localStorage.getItem(k);
-      try { data[k] = JSON.parse(raw); } catch(e) { data[k] = raw; }
-      totalSize += raw ? raw.length : 0;
+      try { data[k] = JSON.parse(localStorage.getItem(k)); }
+      catch(e) { data[k] = localStorage.getItem(k); }
     });
     data._exportedAt = new Date().toISOString();
     data._version = 'repo-collider-v2';
 
+    status.textContent = `Found ${keys.length} keys — saving to server…`;
+
+    // POST backup to server first
+    const res = await fetch('/api/backup', {
+      method: 'POST',
+      headers: {'content-type':'application/json'},
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Server save failed');
+    const result = await res.json();
+    status.textContent = `Saved ${result.keys} keys. Redirecting to deployed app…`;
+
+    // Encode and redirect
     const json = JSON.stringify(data);
     const encoded = btoa(unescape(encodeURIComponent(json)));
 
-    status.textContent = `Packaging ${keys.length} keys (${(json.length/1024).toFixed(1)}KB raw, ${(encoded.length/1024).toFixed(1)}KB encoded)…`;
-
-    // URL length limit — Chrome supports ~100KB, but be safe at 80KB
     if (encoded.length > 80000) {
       spinner.remove();
-      status.innerHTML = '<div class="error">Data too large (' + (encoded.length/1024).toFixed(1) + 'KB encoded). Maximum is 80KB.</div><div class="hint">Use <strong>📦 Export</strong> on localhost → <strong>📥 Import</strong> on the deployed site instead.</div>';
+      status.innerHTML = '<div class="hint">Data too large for URL (' + (encoded.length/1024).toFixed(1) + 'KB).<br>Backup saved to server. Use <strong>📦 Export</strong> → <strong>📥 Import</strong> manually.</div>';
       return;
     }
 
-    status.textContent = 'Redirecting to deployed app…';
-    await new Promise(r => setTimeout(r, 300));
-    window.location.href = 'https://rc-deploy-chi.vercel.app/#import:' + encoded;
+    await new Promise(r => setTimeout(r, 500));
+    window.location.href = 'https://rc-v4.vercel.app/#import:' + encoded;
 
   } catch(e) {
     spinner.remove();
