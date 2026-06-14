@@ -4,6 +4,8 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/proxy" },
+    { "source": "/zen-proxy/(.*)", "destination": "/api/proxy" },
+    { "source": "/gh-proxy/(.*)", "destination": "/api/proxy" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

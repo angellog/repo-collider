@@ -67,120 +67,124 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
-  const originalUrl = req.headers['x-vercel-forwarded-url'] || req.url || '';
+  try {
+    const originalUrl = req.headers['x-vercel-forwarded-url'] || req.url || '';
 
-  // ── AUTH ──
-  if (originalUrl === '/api/auth/register' && req.method === 'POST') {
-    const body = JSON.parse((await getBody(req)).toString());
-    const { email, password } = body;
-    if (!email || !password) { res.status(400).json({ error: 'Email and password required' }); return; }
-    if (password.length < 6) { res.status(400).json({ error: 'Password must be 6+ chars' }); return; }
-    const users = readJSON(USERS_FILE);
-    if (users.length >= MAX_USERS) { res.status(403).json({ error: 'Registration cap reached (100 users)' }); return; }
-    if (users.find(u => u.email === email)) { res.status(409).json({ error: 'Email already registered' }); return; }
-    const user = { id: crypto.randomUUID(), email, passwordHash: hashPassword(password), createdAt: new Date().toISOString() };
-    users.push(user);
-    writeJSON(USERS_FILE, users);
-    const token = createToken(user);
-    res.status(200).json({ token, user: { id: user.id, email: user.email } });
-    return;
-  }
-
-  if (originalUrl === '/api/auth/login' && req.method === 'POST') {
-    const body = JSON.parse((await getBody(req)).toString());
-    const { email, password } = body;
-    if (!email || !password) { res.status(400).json({ error: 'Email and password required' }); return; }
-    const users = readJSON(USERS_FILE);
-    const user = users.find(u => u.email === email);
-    if (!user || !verifyPassword(password, user.passwordHash)) { res.status(401).json({ error: 'Invalid email or password' }); return; }
-    const token = createToken(user);
-    res.status(200).json({ token, user: { id: user.id, email: user.email } });
-    return;
-  }
-
-  if (originalUrl === '/api/auth/me' && req.method === 'GET') {
-    const payload = verifyToken(req.headers['authorization'] || '');
-    if (!payload) { res.status(401).json({ error: 'Invalid or expired token' }); return; }
-    res.status(200).json({ user: { id: payload.id, email: payload.email } });
-    return;
-  }
-
-  if (originalUrl === '/api/auth/stats' && req.method === 'GET') {
-    const users = readJSON(USERS_FILE);
-    res.status(200).json({ totalUsers: users.length, maxUsers: MAX_USERS });
-    return;
-  }
-
-  // ── IDEAS SYNC ──
-  if (originalUrl === '/api/ideas/sync' && req.method === 'POST') {
-    const payload = verifyToken(req.headers['authorization'] || '');
-    if (!payload) { res.status(401).json({ error: 'Invalid or expired token' }); return; }
-    const body = JSON.parse((await getBody(req)).toString());
-    const ideasFile = path.join(IDEAS_DIR, payload.id + '.json');
-    writeJSON(ideasFile, body.ideas || []);
-    res.status(200).json({ ok: true, count: (body.ideas || []).length });
-    return;
-  }
-
-  if (originalUrl === '/api/ideas/sync' && req.method === 'GET') {
-    const payload = verifyToken(req.headers['authorization'] || '');
-    if (!payload) { res.status(401).json({ error: 'Invalid or expired token' }); return; }
-    const ideasFile = path.join(IDEAS_DIR, payload.id + '.json');
-    const ideas = readJSON(ideasFile);
-    res.status(200).json({ ideas });
-    return;
-  }
-
-  // ── PROXY ──
-  let targetHost, prefix, replacement;
-  if (originalUrl.startsWith('/zen-proxy/')) {
-    targetHost = 'opencode.ai';
-    prefix = '/zen-proxy';
-    replacement = '/zen';
-  } else if (originalUrl.startsWith('/gh-proxy/')) {
-    targetHost = 'api.github.com';
-    prefix = '/gh-proxy';
-    replacement = '';
-  } else {
-    res.status(404).json({ error: 'Not found: ' + originalUrl });
-    return;
-  }
-
-  const apiPath = originalUrl.replace(prefix, replacement);
-  const body = await getBody(req);
-
-  return new Promise(resolve => {
-    const options = {
-      hostname: targetHost,
-      path: apiPath,
-      method: req.method,
-      headers: {
-        'host': targetHost,
-        'user-agent': 'RepoCollider/1.0',
-        'accept': 'application/json',
-      },
-    };
-    if (body.length) {
-      options.headers['content-type'] = req.headers['content-type'] || 'application/json';
-      options.headers['content-length'] = body.length;
+    // ── AUTH ──
+    if (originalUrl === '/api/auth/register' && req.method === 'POST') {
+      const body = JSON.parse((await getBody(req)).toString());
+      const { email, password } = body;
+      if (!email || !password) { res.status(400).json({ error: 'Email and password required' }); return; }
+      if (password.length < 6) { res.status(400).json({ error: 'Password must be 6+ chars' }); return; }
+      const users = readJSON(USERS_FILE);
+      if (users.length >= MAX_USERS) { res.status(403).json({ error: 'Registration cap reached (100 users)' }); return; }
+      if (users.find(u => u.email === email)) { res.status(409).json({ error: 'Email already registered' }); return; }
+      const user = { id: crypto.randomUUID(), email, passwordHash: hashPassword(password), createdAt: new Date().toISOString() };
+      users.push(user);
+      writeJSON(USERS_FILE, users);
+      const token = createToken(user);
+      res.status(200).json({ token, user: { id: user.id, email: user.email } });
+      return;
     }
-    ['authorization', 'x-api-key', 'anthropic-version',
-     'anthropic-dangerous-direct-browser-access', 'http-referer', 'x-title']
-      .forEach(h => { if (req.headers[h]) options.headers[h] = req.headers[h]; });
 
-    const proxyReq = https.request(options, proxyRes => {
-      const chunks = [];
-      proxyRes.on('data', c => chunks.push(c));
-      proxyRes.on('end', () => {
-        res.status(proxyRes.statusCode).send(Buffer.concat(chunks));
+    if (originalUrl === '/api/auth/login' && req.method === 'POST') {
+      const body = JSON.parse((await getBody(req)).toString());
+      const { email, password } = body;
+      if (!email || !password) { res.status(400).json({ error: 'Email and password required' }); return; }
+      const users = readJSON(USERS_FILE);
+      const user = users.find(u => u.email === email);
+      if (!user || !verifyPassword(password, user.passwordHash)) { res.status(401).json({ error: 'Invalid email or password' }); return; }
+      const token = createToken(user);
+      res.status(200).json({ token, user: { id: user.id, email: user.email } });
+      return;
+    }
+
+    if (originalUrl === '/api/auth/me' && req.method === 'GET') {
+      const payload = verifyToken(req.headers['authorization'] || '');
+      if (!payload) { res.status(401).json({ error: 'Invalid or expired token' }); return; }
+      res.status(200).json({ user: { id: payload.id, email: payload.email } });
+      return;
+    }
+
+    if (originalUrl === '/api/auth/stats' && req.method === 'GET') {
+      const users = readJSON(USERS_FILE);
+      res.status(200).json({ totalUsers: users.length, maxUsers: MAX_USERS });
+      return;
+    }
+
+    // ── IDEAS SYNC ──
+    if (originalUrl === '/api/ideas/sync' && req.method === 'POST') {
+      const payload = verifyToken(req.headers['authorization'] || '');
+      if (!payload) { res.status(401).json({ error: 'Invalid or expired token' }); return; }
+      const body = JSON.parse((await getBody(req)).toString());
+      const ideasFile = path.join(IDEAS_DIR, payload.id + '.json');
+      writeJSON(ideasFile, body.ideas || []);
+      res.status(200).json({ ok: true, count: (body.ideas || []).length });
+      return;
+    }
+
+    if (originalUrl === '/api/ideas/sync' && req.method === 'GET') {
+      const payload = verifyToken(req.headers['authorization'] || '');
+      if (!payload) { res.status(401).json({ error: 'Invalid or expired token' }); return; }
+      const ideasFile = path.join(IDEAS_DIR, payload.id + '.json');
+      const ideas = readJSON(ideasFile);
+      res.status(200).json({ ideas });
+      return;
+    }
+
+    // ── PROXY ──
+    let targetHost, prefix, replacement;
+    if (originalUrl.startsWith('/zen-proxy/')) {
+      targetHost = 'opencode.ai';
+      prefix = '/zen-proxy';
+      replacement = '/zen';
+    } else if (originalUrl.startsWith('/gh-proxy/')) {
+      targetHost = 'api.github.com';
+      prefix = '/gh-proxy';
+      replacement = '';
+    } else {
+      res.status(404).json({ error: 'Not found: ' + originalUrl });
+      return;
+    }
+
+    const apiPath = originalUrl.replace(prefix, replacement);
+    const body = await getBody(req);
+
+    return new Promise(resolve => {
+      const options = {
+        hostname: targetHost,
+        path: apiPath,
+        method: req.method,
+        headers: {
+          'host': targetHost,
+          'user-agent': 'RepoCollider/1.0',
+          'accept': 'application/json',
+        },
+      };
+      if (body.length) {
+        options.headers['content-type'] = req.headers['content-type'] || 'application/json';
+        options.headers['content-length'] = body.length;
+      }
+      ['authorization', 'x-api-key', 'anthropic-version',
+       'anthropic-dangerous-direct-browser-access', 'http-referer', 'x-title']
+        .forEach(h => { if (req.headers[h]) options.headers[h] = req.headers[h]; });
+
+      const proxyReq = https.request(options, proxyRes => {
+        const chunks = [];
+        proxyRes.on('data', c => chunks.push(c));
+        proxyRes.on('end', () => {
+          res.status(proxyRes.statusCode).send(Buffer.concat(chunks));
+          resolve();
+        });
+      });
+      proxyReq.on('error', e => {
+        res.status(502).json({ error: 'Proxy error: ' + e.message });
         resolve();
       });
+      if (body.length) proxyReq.write(body);
+      proxyReq.end();
     });
-    proxyReq.on('error', e => {
-      res.status(502).json({ error: 'Proxy error: ' + e.message });
-      resolve();
-    });
-    if (body.length) proxyReq.write(body);
-    proxyReq.end();
-  });
+  } catch (e) {
+    res.status(500).json({ error: e.message, stack: e.stack });
+  }
 };
