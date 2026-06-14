@@ -10,6 +10,7 @@ const MIME = {
   '.html': 'text/html',
   '.js': 'application/javascript',
   '.css': 'text/css',
+  '.json': 'application/json',
 };
 
 function serveStatic(res, filePath) {
@@ -21,28 +22,32 @@ function serveStatic(res, filePath) {
   });
 }
 
-function proxyToZen(req, res) {
-    const zenPath = req.url.replace('/zen-proxy', '/zen');
+function proxyRequest(targetHost, targetPort, req, res, pathPrefix) {
+  const apiPath = req.url.replace(pathPrefix, '');
   const bodyChunks = [];
 
   req.on('data', chunk => bodyChunks.push(chunk));
   req.on('end', () => {
     const body = Buffer.concat(bodyChunks);
     const options = {
-      hostname: 'opencode.ai',
-      port: 443,
-      path: zenPath,
+      hostname: targetHost,
+      port: targetPort,
+      path: apiPath,
       method: req.method,
       headers: {
-        'host': 'opencode.ai',
+        'host': targetHost,
         'content-type': req.headers['content-type'] || 'application/json',
         'content-length': body.length,
         'authorization': req.headers['authorization'] || '',
+        'user-agent': 'RepoCollider/1.0',
+        'accept': 'application/json',
         'x-api-key': req.headers['x-api-key'] || '',
         'anthropic-version': req.headers['anthropic-version'] || '',
         'anthropic-dangerous-direct-browser-access': req.headers['anthropic-dangerous-direct-browser-access'] || '',
       },
     };
+    if (req.headers['http-referer']) options.headers['http-referer'] = req.headers['http-referer'];
+    if (req.headers['x-title']) options.headers['x-title'] = req.headers['x-title'];
 
     const proxyReq = https.request(options, (proxyRes) => {
       const responseHeaders = { ...proxyRes.headers };
@@ -69,7 +74,7 @@ function proxyToZen(req, res) {
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, anthropic-version, anthropic-dangerous-direct-browser-access');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, anthropic-version, anthropic-dangerous-direct-browser-access, http-referer, x-title');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
@@ -78,7 +83,12 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.url.startsWith('/zen-proxy/')) {
-    proxyToZen(req, res);
+    proxyRequest('opencode.ai', 443, req, res, '/zen-proxy');
+    return;
+  }
+
+  if (req.url.startsWith('/gh-proxy/')) {
+    proxyRequest('api.github.com', 443, req, res, '/gh-proxy');
     return;
   }
 
