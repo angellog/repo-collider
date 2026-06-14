@@ -54,26 +54,55 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 #refresh-repos:hover{color:var(--text);border-color:var(--accent)}
 #repo-pool-status{font-size:9px;color:var(--muted);padding:4px 0;flex:1;text-align:right}
 
-#selected-tray{display:flex;flex-wrap:wrap;gap:3px;min-height:26px;margin-bottom:10px;padding:2px 0}
-.sel-chip{display:inline-flex;align-items:center;gap:3px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent-h);font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px;cursor:pointer;transition:all .15s}
-.sel-chip:hover{border-color:var(--red);color:var(--red)}
-.sel-chip .x{font-size:13px;line-height:1;margin-left:2px;opacity:.7}
+
 .action-row{display:flex;gap:5px}
-.btn-rand{background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);font-family:var(--font);font-size:11px;font-weight:500;padding:8px 12px;border-radius:var(--radius);cursor:pointer;flex:1;transition:all .15s}
-.btn-rand:hover{border-color:var(--accent);color:var(--text);background:var(--surface-3)}
+
 .btn-gen{background:linear-gradient(135deg,var(--accent),#4f46e5);border:none;color:#fff;font-family:var(--font);font-size:11px;font-weight:600;padding:8px 12px;border-radius:var(--radius);cursor:pointer;flex:2;transition:all .2s;letter-spacing:.3px}
 .btn-gen:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 20px #6366f140}
 .btn-gen:disabled{background:var(--border-hover);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none}
 
-#cat-filter{display:flex;flex-wrap:wrap;gap:3px;padding:8px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
-#cat-filter .pill-btn{font-size:9px;padding:2px 8px}
-#repo-list{overflow-y:auto;flex:1}
-.repo-chip{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #0f172a;cursor:pointer;transition:all .1s}
-.repo-chip:hover{background:var(--surface-2)}
-.repo-chip.selected{background:#6366f110;border-left:2px solid var(--accent);padding-left:12px}
-.repo-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
-.repo-name{flex:1;font-size:11px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#progress-wrap{display:none;padding:48px 0 20px;max-width:480px;margin:0 auto;width:100%}
+#progress-bar-bg{height:4px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin-bottom:8px}
+#progress-bar-fill{height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--teal));transition:width .4s cubic-bezier(.22,1,.36,1)}
+#progress-bar-fill.indeterminate{width:40%;animation:progressIndeterminate 1.4s ease-in-out infinite}
+#progress-info{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:8px}
+#progress-stage{font-weight:600;color:var(--text-2);transition:color .2s}
+#progress-time{font-family:var(--mono);color:var(--muted);font-size:11px}
+#progress-stages{display:flex;gap:3px;justify-content:center}
+.prog-dot{width:8px;height:8px;border-radius:50%;background:var(--surface-2);transition:background .3s}
+.prog-dot.done{background:var(--accent);box-shadow:0 0 6px #6366f160}
+.prog-dot.active{background:var(--teal);box-shadow:0 0 6px #2dd4bf60;animation:progPulse .8s ease-in-out infinite}
+.prog-dot.error{background:var(--red);box-shadow:0 0 6px #fb718560}
+
+@keyframes progressIndeterminate{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+@keyframes progPulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+#repo-list{overflow-y:auto;flex:1;padding:4px 0}
+#import-section{border-top:1px solid var(--border);padding:10px 14px 4px;flex-shrink:0}
+.import-row{display:flex;gap:4px;margin-bottom:6px}
+.import-input{background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:10px;padding:5px 8px;border-radius:var(--radius-sm);flex:1;outline:none;transition:border-color .15s;min-width:0}
+.import-input:focus{border-color:var(--accent)}
+.import-input::placeholder{color:var(--muted)}
+.import-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--dim);font-family:var(--font);font-size:9px;font-weight:600;padding:5px 10px;border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.import-btn:hover{color:var(--text);border-color:var(--accent)}
+.import-btn:disabled{opacity:.4;cursor:not-allowed}
+#import-status{font-size:9px;color:var(--muted);min-height:14px;margin-bottom:2px}
+.cat-section{border-bottom:1px solid #0f172a}
+.cat-section-header{display:flex;align-items:center;gap:6px;padding:7px 14px;cursor:pointer;user-select:none;transition:background .1s}
+.cat-section-header:hover{background:var(--surface-2)}
+.cat-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.cat-section-label{font-size:9px;font-weight:600;color:var(--text);flex:1;letter-spacing:.3px}
+.cat-section-count{font-size:8px;color:var(--muted);font-weight:500;min-width:16px;text-align:right}
+.cat-section-arrow{font-size:8px;color:var(--dim);transition:transform .2s;flex-shrink:0}
+.cat-section.collapsed .cat-section-arrow{transform:rotate(-90deg)}
+.cat-section.collapsed .cat-section-body{display:none}
+.cat-section-body{padding:0 14px 6px 26px}
+.repo-row{display:flex;align-items:center;gap:4px;padding:3px 0;font-size:10px;color:var(--text-2)}
+.repo-row-source{font-size:8px;width:12px;text-align:center;flex-shrink:0;color:var(--dim)}
+.repo-row-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .repo-stars{font-size:9px;color:var(--dim);white-space:nowrap}
+
+
 
 #filter-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
 #search-input{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:11px;padding:5px 10px;border-radius:var(--radius-sm);width:160px;outline:none;transition:border-color .15s}
@@ -221,40 +250,49 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div id="main">
     <div id="left">
       <div id="left-top">
-        <div class="panel-label">Combination Size</div>
-        <div class="combo-row" id="combo-btns">
-          <button class="pill-btn active" onclick="setCombo(2,this)">2</button>
-          <button class="pill-btn" onclick="setCombo(3,this)">3</button>
-          <button class="pill-btn" onclick="setCombo(4,this)">4</button>
-          <button class="pill-btn" onclick="setCombo(5,this)">5</button>
-        </div>
         <div id="repo-controls">
-          <button id="refresh-repos" onclick="refreshRepos()">↻ Refresh pool</button>
+          <button id="refresh-repos" onclick="refreshRepos()">↻ Refresh</button>
           <span id="repo-pool-status"></span>
         </div>
-        <div class="panel-label">Selected (<span id="sel-count">0</span>/5)</div>
-        <div id="selected-tray"><span style="color:var(--muted);font-size:10px">Pick repos below or randomize</span></div>
         <div class="action-row">
-          <button class="btn-rand" onclick="randomize()">🎲 Randomize</button>
           <button class="btn-gen" id="gen-btn" onclick="generate()" disabled>⚡ Collide</button>
         </div>
+        <div id="import-section">
+          <div class="panel-label">Import</div>
+          <div class="import-row">
+            <input id="gh-user-input" class="import-input" placeholder="GitHub username…" onkeydown="if(event.key==='Enter')fetchStars()"/>
+            <button class="import-btn" id="stars-btn" onclick="fetchStars()">★ Stars</button>
+          </div>
+          <div class="import-row">
+            <input id="gh-url-input" class="import-input" placeholder="https://github.com/owner/repo" onkeydown="if(event.key==='Enter')addRepo()"/>
+            <button class="import-btn" id="add-repo-btn" onclick="addRepo()">+ Add</button>
+          </div>
+          <div id="import-status"></div>
+        </div>
       </div>
-      <div id="cat-filter"></div>
       <div id="repo-list"></div>
     </div>
     <div id="right">
       <div id="filter-bar">
         <input id="search-input" placeholder="Search ideas…" oninput="renderIdeas()"/>
-        <button class="sort-btn active" id="sort-score" onclick="setSort('score',this)">Score ↓</button>
-        <button class="sort-btn" id="sort-recent" onclick="setSort('recent',this)">Recent</button>
+        <button class="sort-btn" id="sort-score" onclick="setSort('score',this)">Score ↓</button>
+        <button class="sort-btn active" id="sort-recent" onclick="setSort('recent',this)">Recent</button>
         <span id="idea-count"></span>
         <button id="export-btn" onclick="exportCSV()">↓ Export</button>
+      </div>
+      <div id="progress-wrap" style="display:none">
+        <div id="progress-bar-bg"><div id="progress-bar-fill"></div></div>
+        <div id="progress-info">
+          <span id="progress-stage">Preparing…</span>
+          <span id="progress-time">0s</span>
+        </div>
+        <div id="progress-stages"></div>
       </div>
       <div id="ideas-wrap">
         <div id="empty-state">
           <div class="icon">⚡</div>
           <div class="title">No ideas yet</div>
-          <div class="desc">Pool loads the top 100 GitHub repos automatically → pick 2–5 → collide</div>
+           <div class="desc">Pool loads the top 100 GitHub repos automatically → click Collide</div>
         </div>
         <div id="ideas-grid" style="display:none"></div>
       </div>
@@ -296,16 +334,21 @@ const S = {
   apiKeys: JSON.parse(localStorage.getItem('rc-api-keys')||'{}'),
   activeProvider: localStorage.getItem('rc-provider')||'openzen',
   activeModel: localStorage.getItem('rc-model')||'',
-  comboSize: 2,
-  selectedRepos: [],
-  ideas: [],
+  ideas: JSON.parse(localStorage.getItem('rc-ideas')||'[]'),
   savedIds: new Set(JSON.parse(localStorage.getItem('rc-saved-ids')||'[]')),
   allSaved: JSON.parse(localStorage.getItem('rc-saved-ideas')||'[]'),
-  sortMode: 'score',
+  sortMode: 'recent',
   currentView: 'collider',
   generating: false,
   buildPromptText: '',
+  starredUser: '',
+  starredRepos: JSON.parse(localStorage.getItem('rc-starred-repos')||'[]'),
+  manualRepos: JSON.parse(localStorage.getItem('rc-manual-repos')||'[]'),
 };
+
+function saveIdeas() {
+  localStorage.setItem('rc-ideas', JSON.stringify(S.ideas));
+}
 
 // ── PROVIDERS ──
 const PROVIDERS = [
@@ -391,16 +434,18 @@ const PROVIDERS = [
 ];
 
 // ── CATEGORIES ──
+const CAT_ORDER = [
+  'AI/ML','Framework','Infrastructure','Tool/Utility','Data/Storage',
+  'Developer Tool','Security','Communication','Media/Content','UI/Design',
+  'Resource/Reference','Government/Public','Automation/DevOps','Runtime/Language',
+  'Other',
+];
 const CAT_COLORS = {
-  AI:"#a78bfa","Machine Learning":"#a78bfa","LLM":"#8b5cf6",
-  Infra:"#38bdf8",Infrastructure:"#38bdf8",DevOps:"#0ea5e9",
-  Automation:"#fb923c",UI:"#f472b6","Frontend":"#f472b6",
-  Productivity:"#4ade80",Data:"#facc15",Database:"#fbbf24",
-  Commerce:"#fb7185",Analytics:"#34d399",Comms:"#60a5fa",
-  Finance:"#a3e635",CRM:"#c084fc",Gov:"#94a3b8",
-  Media:"#ff6b6b",Geo:"#2dd4bf",Security:"#ef4444",
-  "Developer Tools":"#818cf8",Tool:"#818cf8",
-  Runtime:"#22d3ee",Language:"#f0abfc",
+  'AI/ML':'#a78bfa','Framework':'#38bdf8','Infrastructure':'#0ea5e9',
+  'Tool/Utility':'#f472b6','Data/Storage':'#facc15','Developer Tool':'#818cf8',
+  'Security':'#ef4444','Communication':'#60a5fa','Media/Content':'#ff6b6b',
+  'UI/Design':'#f97316','Resource/Reference':'#4ade80','Government/Public':'#94a3b8',
+  'Automation/DevOps':'#fb923c','Runtime/Language':'#22d3ee','Other':'#64748b',
 };
 
 const SCOPES = [
@@ -439,7 +484,6 @@ const GITHUB_CACHE_KEY = 'rc-gh-repos-v2';
 const GITHUB_CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
 
 let REPOS = [];
-let activeCat = 'All';
 
 async function refreshRepos(){
   const btn = $('refresh-repos');
@@ -462,10 +506,9 @@ async function fetchTopRepos(force){
     if(cached){
       try{
         const parsed = JSON.parse(cached);
-        if(Date.now() - parsed.ts < GITHUB_CACHE_TTL){
-          REPOS = parsed.repos;
-          updatePoolStatus();
-          if(REPOS.length) return;
+        if(Date.now() - parsed.ts < GITHUB_CACHE_TTL && parsed.repos.length){
+          rebuildPool();
+          return;
         }
       }catch(e){}
     }
@@ -483,31 +526,24 @@ async function fetchTopRepos(force){
   const data = await res.json();
   if(!data.items||!data.items.length){ throw new Error('No repos returned'); }
 
-  REPOS = data.items.map((r,i)=>({
-    id: i+1,
-    name: r.full_name,
-    cat: mapLanguageToCategory(r.language||r.topics?.[0]||'Tool'),
-    stars: formatStars(r.stargazers_count),
-    stars_raw: r.stargazers_count,
-    desc: r.description||'No description',
-    lang: r.language||'',
-    topics: r.topics||[],
-    url: r.html_url,
-  }));
+  const top100 = data.items.map(r => ghItemToRepo(r, 'top100'));
 
   // Sort by stars descending
-  REPOS.sort((a,b)=>b.stars_raw-a.stars_raw);
-  REPOS.forEach((r,i)=>r.id=i+1);
+  top100.sort((a,b)=>b.stars_raw-a.stars_raw);
 
   // Cache
-  localStorage.setItem(GITHUB_CACHE_KEY, JSON.stringify({ts: Date.now(), repos: REPOS}));
-  updatePoolStatus();
+  localStorage.setItem(GITHUB_CACHE_KEY, JSON.stringify({ts: Date.now(), repos: top100}));
+  rebuildPool();
 }
 
 function updatePoolStatus(){
   const n = REPOS.length;
-  $('repo-pool-status').textContent = `${n} repos`;
-  renderCatFilter();
+  const top = REPOS.filter(r=>r.source==='top100').length;
+  const starred = REPOS.filter(r=>r.source==='starred').length;
+  const manual = REPOS.filter(r=>r.source==='manual').length;
+  let label = `${n} repos`;
+  if (starred || manual) label += ` (${top}↑${starred>0?' ★'+starred:''}${manual>0?' +'+manual:''})`;
+  $('repo-pool-status').textContent = label;
   renderRepoList();
 }
 
@@ -517,20 +553,26 @@ function formatStars(n){
   return String(n);
 }
 
-function mapLanguageToCategory(lang){
-  const map = {
-    'Python':'AI','TypeScript':'Infra','JavaScript':'Infra','Go':'Infra','Rust':'Infra',
-    'Java':'Infra','Kotlin':'Infra','Swift':'Infra','C':'Infra','C++':'Infra',
-    'Ruby':'Infra','PHP':'Infra','C#':'Infra','Shell':'DevOps','Dockerfile':'DevOps',
-    'HTML':'UI','CSS':'UI','SCSS':'UI','Svelte':'UI','Vue':'UI',
-    'Jupyter Notebook':'Data Science','R':'Data Science',
-    'SQL':'Database','PLpgSQL':'Database',
-    'HCL':'DevOps','Terraform':'DevOps','Nix':'DevOps',
-    'Elixir':'Infra','Scala':'Infra','Haskell':'Infra','Clojure':'Infra',
-    'Solidity':'Blockchain','V':'Language','Zig':'Language',
-    'Lua':'Tool','TeX':'Productivity','Makefile':'DevOps',
-  };
-  return map[lang]||'Tool';
+function categorizeRepo(r) {
+  const t = (r.topics||[]).join(' ').toLowerCase();
+  const d = (r.description||'').toLowerCase();
+  const l = (r.language||'').toLowerCase();
+  const s = t+' '+d+' '+l;
+  if(/ai|machine.learning|deep.learning|llm|gpt|transformer|neural|pytorch|tensorflow|artificial.intelligence|openai|huggingface|inference|ml\b/.test(s)) return 'AI/ML';
+  if(/framework|library|sdk|toolkit|platform|engine|react|vue|angular|svelte|nextjs|nuxt|express|django|rails|spring|bootstrap|tailwind/.test(s)) return 'Framework';
+  if(/infrastructure|cloud|kubernetes|k8s|docker|container|orchestration|serverless|terraform|istio|mesh|load.balanc|cluster/.test(s)) return 'Infrastructure';
+  if(/database|db\b|storage|query|cache|sql|nosql|redis|postgres|mysql|mongo|elastic|data.warehouse|lake|stream|spark|kafka/.test(s)) return 'Data/Storage';
+  if(/security|auth|encryption|secret|vulnerability|certificate|identity|oauth|jwt|crypto|ssl|tls/.test(s)) return 'Security';
+  if(/communication|messaging|real.time|websocket|chat|notification|pub.sub|mqtt/.test(s)) return 'Communication';
+  if(/media|video|image|audio|animation|render|ffmpeg|player|codec|streaming/.test(s)) return 'Media/Content';
+  if(/ui\b|design.system|component|css|frontend|tailwind|responsive|icon/.test(s)) return 'UI/Design';
+  if(/developer.tool|cli\b|debug|test|build|lint|format|compiler|package.manager|dev.tool|plugin/.test(s)) return 'Developer Tool';
+  if(/awesome|resource|guide|tutorial|book|cheat.sheet|example|list|reference|docs?\.?/.test(s)) return 'Resource/Reference';
+  if(/government|public.service|civic|open.data|regulation|policy|transparency/.test(s)) return 'Government/Public';
+  if(/automation|ci|cd|pipeline|monitoring|observability|logging|deploy|gitops|sre|devops/.test(s)) return 'Automation/DevOps';
+  if(/runtime|language|compiler|interpreter|vm\b|wasm|jvm|bytecode/.test(s)) return 'Runtime/Language';
+  if(/tool\b|utility|script|automation/.test(s)) return 'Tool/Utility';
+  return 'Other';
 }
 
 // ── HELPERS ──
@@ -560,6 +602,23 @@ async function init(){
   renderModelSelect();
   restoreApiKey();
   await fetchTopRepos(false);
+  // Migrate old saved ideas into persistent pool
+  const oldSaved = JSON.parse(localStorage.getItem('rc-saved-ideas')||'[]');
+  if (oldSaved.length) {
+    const existingIds = new Set(S.ideas.map(i => i.id));
+    let changed = false;
+    oldSaved.forEach(i => {
+      if (!existingIds.has(i.id)) { S.ideas.push(i); changed = true; }
+    });
+    if (changed) saveIdeas();
+  }
+  S.allSaved = S.ideas.filter(i => S.savedIds.has(i.id));
+  if (S.ideas.length) {
+    $('saved-count-badge').textContent = S.savedIds.size || '';
+    renderIdeas();
+    renderSavedView();
+    renderStats();
+  }
   updateGenBtn();
 }
 
@@ -604,70 +663,131 @@ function handleApiKey(val){
   updateApiStatus();updateGenBtn();
 }
 
-function setCombo(n,btn){
-  S.comboSize=n;
-  document.querySelectorAll('#combo-btns .pill-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
 // ── REPO LIST ──
-function renderCatFilter(){
-  const cats=['All',...new Set(REPOS.map(r=>r.cat))];
-  $('cat-filter').innerHTML=cats.map(c=>`<button class="pill-btn${c===activeCat?' active':''}" onclick="setCat('${c}',this)">${c}</button>`).join('');
-}
-
-function setCat(c,btn){
-  activeCat=c;
-  document.querySelectorAll('#cat-filter .pill-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderRepoList();
-}
-
 function renderRepoList(){
-  const visible=activeCat==='All'?REPOS:REPOS.filter(r=>r.cat===activeCat);
-  $('repo-list').innerHTML=visible.map(r=>{
-    const sel=S.selectedRepos.find(s=>s.id===r.id);
-    return `<div class="repo-chip${sel?' selected':''}" onclick="toggleRepo(${r.id})">
-      <div class="repo-dot" style="background:${CAT_COLORS[r.cat]||'#475569'}"></div>
-      <div class="repo-name" title="${esc(r.name)}">${esc(r.name)}</div>
-      <div class="repo-stars">★ ${r.stars}</div>
+  const byCat = {};
+  REPOS.forEach(r => {
+    if (!byCat[r.cat]) byCat[r.cat] = [];
+    byCat[r.cat].push(r);
+  });
+  $('repo-list').innerHTML = CAT_ORDER.filter(c => byCat[c]).map(cat => {
+    const items = byCat[cat];
+    return `<div class="cat-section">
+      <div class="cat-section-header" onclick="toggleCatSection(this)">
+        <span class="cat-dot" style="background:${CAT_COLORS[cat]||'#475569'}"></span>
+        <span class="cat-section-label">${cat}</span>
+        <span class="cat-section-count">${items.length}</span>
+        <span class="cat-section-arrow">▾</span>
+      </div>
+      <div class="cat-section-body">${items.map(r => `
+        <div class="repo-row" title="${esc(r.desc)}">
+          <span class="repo-row-source">${r.source==='starred'?'★':r.source==='manual'?'+':''}</span>
+          <span class="repo-row-name">${esc(r.name.split('/')[1])}</span>
+          <span class="repo-stars">★ ${r.stars}</span>
+        </div>`).join('')}
+      </div>
     </div>`;
   }).join('');
 }
 
-function toggleRepo(id){
-  const repo=REPOS.find(r=>r.id===id);
-  if(!repo) return;
-  const idx=S.selectedRepos.findIndex(r=>r.id===id);
-  if(idx>=0) S.selectedRepos.splice(idx,1);
-  else if(S.selectedRepos.length<5) S.selectedRepos.push(repo);
-  renderRepoList();
-  renderTray();
-  updateGenBtn();
-}
-
-function renderTray(){
-  const el=$('selected-tray');
-  $('sel-count').textContent=S.selectedRepos.length;
-  if(!S.selectedRepos.length){el.innerHTML='<span style="color:var(--muted);font-size:10px">Pick repos below or randomize</span>';return;}
-  el.innerHTML=S.selectedRepos.map(r=>`<span class="sel-chip" onclick="toggleRepo(${r.id})">${r.name.split('/')[1]||r.name}<span class="x">×</span></span>`).join('');
-}
-
-function randomize(){
-  if(!REPOS.length){showToast('No repos loaded yet');return;}
-  const pool=[...REPOS].sort(()=>Math.random()-.5);
-  S.selectedRepos=pool.slice(0,S.comboSize);
-  renderRepoList();renderTray();updateGenBtn();
-}
-
 function updateGenBtn(){
   const btn=$('gen-btn');
-  const ready=validKey()&&S.selectedRepos.length>=2&&!S.generating;
+  const ready=validKey()&&REPOS.length>0&&!S.generating;
   btn.disabled=!ready;
   if(S.generating) btn.innerHTML='<span class="modal-spinner" style="width:14px;height:14px;border-width:2px;margin:0 4px 0 0;display:inline-block;vertical-align:middle"></span>Colliding…';
   else if(!validKey()) btn.textContent='⚡ Need API Key';
-  else if(S.selectedRepos.length<2) btn.textContent='⚡ Pick 2+ Repos';
   else btn.textContent='⚡ Collide';
+}
+
+function toggleCatSection(header){
+  header.parentElement.classList.toggle('collapsed');
+}
+
+// ── IMPORT FUNCTIONS ──
+function ghItemToRepo(r, source) {
+  return {
+    name: r.full_name,
+    cat: categorizeRepo(r),
+    stars: formatStars(r.stargazers_count),
+    stars_raw: r.stargazers_count,
+    desc: r.description||'No description',
+    lang: r.language||'',
+    topics: r.topics||[],
+    url: r.html_url,
+    source: source || 'top100',
+  };
+}
+
+function rebuildPool() {
+  const seen = new Set();
+  const top100 = JSON.parse(localStorage.getItem(GITHUB_CACHE_KEY)||'{}').repos || [];
+  const all = [...top100, ...S.starredRepos, ...S.manualRepos];
+  REPOS = [];
+  all.forEach(r => {
+    const key = r.name;
+    if (!seen.has(key)) { seen.add(key); REPOS.push({...r, id: REPOS.length+1}); }
+  });
+  updatePoolStatus();
+}
+
+function importStatus(msg) {
+  $('import-status').textContent = msg;
+}
+
+async function fetchStars() {
+  const username = $('gh-user-input').value.trim();
+  if (!username) { importStatus('Enter a GitHub username'); return; }
+  const btn = $('stars-btn');
+  btn.disabled = true;
+  btn.textContent = '★ Loading…';
+  importStatus(`Fetching ${username}'s starred repos…`);
+  try {
+    const res = await fetch(`/gh-proxy/users/${encodeURIComponent(username)}/starred?per_page=100&sort=created&direction=desc`, {
+      headers: { 'Accept': 'application/vnd.github.v3+json' },
+    });
+    if (!res.ok) throw new Error(`GitHub API: HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.length) throw new Error('No starred repos found');
+    S.starredRepos = data.map(r => ghItemToRepo(r, 'starred'));
+    S.starredUser = username;
+    localStorage.setItem('rc-starred-repos', JSON.stringify(S.starredRepos));
+    rebuildPool();
+    importStatus(`★ ${S.starredRepos.length} repos from @${username}`);
+  } catch(e) {
+    importStatus('❌ ' + e.message.slice(0, 50));
+  }
+  btn.disabled = false;
+  btn.textContent = '★ Stars';
+}
+
+async function addRepo() {
+  const raw = $('gh-url-input').value.trim();
+  if (!raw) { importStatus('Paste a GitHub repo URL'); return; }
+  const m = raw.match(/(?:github\.com\/)?([^\/\s]+\/[^\/\s?#]+)/);
+  if (!m) { importStatus('Invalid URL — use https://github.com/owner/repo'); return; }
+  const fullName = m[1].replace(/\/$/,'');
+  if (S.manualRepos.find(r => r.name === fullName)) { importStatus('Already in pool'); return; }
+  const btn = $('add-repo-btn');
+  btn.disabled = true;
+  btn.textContent = '+ Adding…';
+  importStatus(`Fetching ${fullName}…`);
+  try {
+    const res = await fetch(`/gh-proxy/repos/${fullName}`, {
+      headers: { 'Accept': 'application/vnd.github.v3+json' },
+    });
+    if (!res.ok) throw new Error(`GitHub API: HTTP ${res.status}`);
+    const data = await res.json();
+    const repo = ghItemToRepo(data, 'manual');
+    S.manualRepos.push(repo);
+    localStorage.setItem('rc-manual-repos', JSON.stringify(S.manualRepos));
+    rebuildPool();
+    importStatus(`+ Added ${repo.name}`);
+    $('gh-url-input').value = '';
+  } catch(e) {
+    importStatus('❌ ' + e.message.slice(0, 50));
+  }
+  btn.disabled = false;
+  btn.textContent = '+ Add';
 }
 
 // ── JSON PARSER ──
@@ -751,41 +871,127 @@ async function callLLM(prompt,maxTokens){
   throw new Error('Unknown provider type: '+p.type);
 }
 
+// ── PROGRESS TRACKER ──
+let _progTimer = null;
+let _progStart = 0;
+
+function startProgress(stages) {
+  const wrap = $('progress-wrap');
+  const fill = $('progress-bar-fill');
+  const stageEl = $('progress-stage');
+  const timeEl = $('progress-time');
+  const dotsEl = $('progress-stages');
+  wrap.style.display = 'block';
+  fill.style.width = '0%';
+  fill.className = '';
+  stageEl.textContent = 'Starting…';
+  timeEl.textContent = '0s';
+  dotsEl.innerHTML = stages.map((s, i) =>
+    `<span class="prog-dot${i === 0 ? ' active' : ''}" title="${s}"></span>`
+  ).join('');
+  _progStart = Date.now();
+  clearInterval(_progTimer);
+  _progTimer = setInterval(() => {
+    const sec = Math.floor((Date.now() - _progStart) / 1000);
+    timeEl.textContent = `${sec}s`;
+  }, 200);
+}
+
+function updateProgress(index, label) {
+  const stageEl = $('progress-stage');
+  const fill = $('progress-bar-fill');
+  const dots = $$('.prog-dot');
+  const total = dots.length;
+  const pct = total > 1 ? Math.round((index / (total - 1)) * 85) : 50;
+  stageEl.textContent = label;
+  fill.style.width = `${Math.max(8, pct)}%`;
+  fill.className = 'indeterminate';
+  dots.forEach((d, i) => {
+    d.className = 'prog-dot' + (i < index ? ' done' : i === index ? ' active' : '');
+  });
+}
+
+function endProgress(error) {
+  clearInterval(_progTimer);
+  const fill = $('progress-bar-fill');
+  const stageEl = $('progress-stage');
+  const dots = $$('.prog-dot');
+  if (error) {
+    fill.style.width = '100%';
+    fill.className = '';
+    fill.style.background = 'var(--red)';
+    stageEl.textContent = 'Error — ' + error;
+    dots.forEach(d => d.className = 'prog-dot error');
+    setTimeout(() => { $('progress-wrap').style.display = 'none'; }, 3000);
+  } else {
+    fill.style.width = '100%';
+    fill.className = '';
+    fill.style.background = 'var(--green)';
+    stageEl.textContent = 'Done!';
+    dots.forEach(d => d.className = 'prog-dot done');
+    setTimeout(() => { $('progress-wrap').style.display = 'none'; }, 1500);
+  }
+}
+
+function $$(sel) { return Array.from(document.querySelectorAll(sel)); }
+
 // ── GENERATE ──
 async function generate(){
   if(S.generating||!REPOS.length) return;
   S.generating=true;
   updateGenBtn();
+  startProgress(['Analyzing pool…', 'Synthesizing ideas…', 'Parsing…', 'Done']);
 
-  const repoList = S.selectedRepos.map(r=>`${r.name}: ${r.desc} [lang: ${r.lang||'N/A'}, topics: ${(r.topics||[]).join(', ')||'N/A'}]`).join('\n');
-  const countryHint = USER_COUNTRY !== 'Unknown' ? `The user is in ${USER_COUNTRY} ${USER_FLAG}. Consider whether each idea could be built/used there. Tag as local, national, or global.` : '';
-  const prompt = `You are a hyper-creative startup idea engine with deep technical and market insight. Generate exactly 5 distinct product ideas that meaningfully COMBINE 2 or more of these open-source repos:
+  const byCat = {};
+  REPOS.forEach(r => { if (!byCat[r.cat]) byCat[r.cat] = []; byCat[r.cat].push(r); });
+  const catSummary = CAT_ORDER.filter(c => byCat[c]).map(c => `${c} (${byCat[c].length})`).join(', ');
 
-${repoList}
+  const countryHint = USER_COUNTRY !== 'Unknown'
+    ? `The user's location is ${USER_COUNTRY} ${USER_FLAG}. Consider local relevance.`
+    : '';
+
+  const poolBlock = CAT_ORDER.filter(c => byCat[c]).map(cat =>
+    `[${cat}]\n${byCat[cat].map(r => `  ${r.name} | ${r.desc.slice(0, 120)}`).join('\n')}`
+  ).join('\n\n');
+
+  const prompt = `You are a deep-tech analyst and product visionary. Below is the entire pool of the top 100 open-source repos, grouped by category.
+
+${poolBlock}
 
 ${countryHint}
 
-For each idea, think OUTSIDE THE BOX. Combine repos in unexpected ways. Consider:
-- Emerging trends (AI agents, edge computing, decentralized web, climate tech, etc.)
-- Underserved markets and overlooked user segments
-- Geographic opportunity — could this serve ${USER_COUNTRY||'a specific country'} or the whole world?
-- Technical synergy — why these specific repos work better together than apart
-- Viral mechanics — why people would share this
+YOUR TASK — two phases, in a single response:
 
-IMPORTANT: Respond ONLY with a valid JSON array. No markdown, no code fences, no extra text.
+PHASE 1 — ANALYSIS
+Scan the landscape above. Identify:
+- Which categories are strongest and most mature
+- Where the natural "fits" are (which repo types complement each other)
+- What's missing or underserved — gaps that new products could fill
+- Emerging patterns where 2+ categories can converge
+
+PHASE 2 — SYNTHESIS
+Based on your analysis, generate 5 product ideas. Each must combine repos from the pool — pick any repos, any number, across any categories. The more surprising and cross-category the combination, the better. Do NOT limit yourself to 2–3 repos per idea; use as many as the product needs.
+
+For each idea:
+- Pick specific repos by full name (e.g. "torvalds/linux")
+- Explain why those specific repos fit together — what each contributes
+- Score honestly (1–100): originality + market_size + buildability + wow_factor
+
+IMPORTANT. Respond ONLY with a valid JSON array. No markdown, no code fences, no extra text.
 
 [
   {
-    "name": "Product name (catchy, 1-3 words)",
+    "name": "Product name (catchy, 1–4 words)",
     "tagline": "One punchy sentence under 12 words",
-    "repos_used": ["repo1","repo2"],
+    "repos_used": ["owner/repo1", "owner/repo2"],
+    "analysis": "1–2 sentences on the landscape insight that led to this idea",
     "scope": "Neighborhood or City or Country or Continent or Planet",
     "geo_level": "local or national or global",
     "country_relevance": "Why this matters for ${USER_COUNTRY||'the user\'s country'} or globally",
-    "problem": "The exact pain point solved (1 sentence)",
+    "problem": "The exact pain point (1 sentence)",
     "how": "How the repos combine technically (2 sentences)",
     "monetization": "Revenue model (1 sentence)",
-    "viral_factor": "Why people share it (1 sentence)",
+    "viral_factor": "Why people would share it (1 sentence)",
     "target_user": "Who uses this (1 sentence)",
     "score": 75,
     "difficulty": "Weekend or 1 Month or 6 Months or 1 Year",
@@ -793,19 +999,20 @@ IMPORTANT: Respond ONLY with a valid JSON array. No markdown, no code fences, no
   }
 ]
 
-SCORING RULES (integer 1-100):
-originality(0-30) + market_size(0-25) + buildability(0-25) + wow_factor(0-20)
-Be honest — not every idea is a 90. Use the full 1-100 range.`;
+SCORING RULES (integer 1–100):
+originality(0–30) + market_size(0–25) + buildability(0–25) + wow_factor(0–20)`;
 
   try{
+    updateProgress(1, 'Synthesizing ideas…');
     const text=await callLLM(prompt,16384);
+    updateProgress(2, 'Parsing…');
     const parsed=extractJSON(text);
     const scopeOf=s=>SCOPES.find(x=>x.label===s)||SCOPES[Math.floor(Math.random()*SCOPES.length)];
     const brainLabel=`${getProvider(S.activeProvider)?.name||'?'} / ${getModelName()}`;
     const fresh=parsed.map((idea,i)=>({
       ...idea,
       id:Date.now()+i+Math.random(),
-      repos_full:S.selectedRepos,
+      repos_full:REPOS,
       scopeMeta:scopeOf(idea.scope),
       generatedAt:new Date().toISOString(),
       expanded:false,
@@ -814,10 +1021,15 @@ Be honest — not every idea is a 90. Use the full 1-100 range.`;
       geo_level: idea.geo_level||(idea.scope==='Country'?'national':idea.scope==='Continent'||idea.scope==='Planet'?'global':'local'),
     }));
     S.ideas=[...fresh,...S.ideas];
-    showToast(`⚡ ${fresh.length} ideas via ${brainLabel}`);
+    saveIdeas();
+    const catsUsed = CAT_ORDER.filter(c => byCat[c]).join(', ');
+    showToast(`⚡ ${fresh.length} ideas synthesized across ${catsUsed}`);
     renderIdeas();
+    updateProgress(3, 'Done');
+    endProgress();
   }catch(e){
     showToast('❌ '+e.message.slice(0,80));
+    endProgress(e.message.slice(0,60));
   }
   S.generating=false;
   updateGenBtn();
@@ -870,8 +1082,10 @@ function cardHTML(idea){
       <button class="card-btn save-btn${saved?' saved':''}" onclick="toggleSave(${idea.id})">${saved?'♥ Saved':'♡ Save'}</button>
       <button class="card-btn" onclick="toggleExpand(${idea.id})">${idea.expanded?'▲ Less':'▼ More'}</button>
       <button class="card-btn build-btn" onclick="openBuild(${idea.id})">🔨 Build</button>
+      <button class="card-btn" onclick="deleteIdea(${idea.id})" style="color:var(--red);flex:0;padding:5px 7px" title="Remove from pool">✕</button>
     </div>
     <div class="expand-section${idea.expanded?' open':''}" id="exp-${idea.id}">
+      ${r('Landscape Insight','#818cf8',idea.analysis)}
       ${r('Problem','#fb923c',idea.problem)}
       ${r('How It\'s Built','#38bdf8',idea.how)}
       ${r('Monetization','#4ade80',idea.monetization)}
@@ -913,6 +1127,19 @@ function toggleSave(id){
   $('saved-count-badge').textContent=S.savedIds.size||'';
   renderIdeas();
   if(S.currentView==='saved') renderSavedView();
+  saveIdeas();
+}
+
+function deleteIdea(id){
+  S.ideas = S.ideas.filter(i => i.id !== id);
+  S.savedIds.delete(id);
+  S.allSaved = S.allSaved.filter(i => i.id !== id);
+  localStorage.setItem('rc-saved-ids', JSON.stringify([...S.savedIds]));
+  saveIdeas();
+  $('saved-count-badge').textContent = S.savedIds.size || '';
+  renderIdeas();
+  if (S.currentView === 'saved') renderSavedView();
+  showToast('🗑 Removed from pool');
 }
 
 function setSort(mode,btn){
@@ -1016,25 +1243,26 @@ MONETIZATION: ${idea.monetization}
 USER: ${idea.target_user}
 DIFFICULTY: ${idea.difficulty}
 COUNTRY RELEVANCE: ${idea.country_relevance||'N/A'}
+ANALYSIS: ${idea.analysis||'N/A'}
 
-Respond ONLY with valid JSON:
+Respond ONLY with valid JSON — no markdown, no code fences, no extra text:
 {
-  "recommended_stack": "stack explanation",
-  "mvp_scope": "5 MVP features (numbered, newline separated)",
-  "file_structure": "file tree",
-  "first_build_prompt": "complete master prompt, 300+ words",
-  "key_risks": "top 3 risks (numbered)",
-  "estimated_cost": "monthly cost",
+  "recommended_stack": "tech stack with reasoning",
+  "mvp_scope": "5 MVP features (numbered, each 1 line)",
+  "file_structure": "file tree (indented lines)",
+  "first_build_prompt": "complete build prompt, 300+ words, covering all steps",
+  "key_risks": "top 3 risks (numbered, each 1 line)",
+  "estimated_cost": "monthly cost estimate",
   "time_to_mvp": "time estimate"
 }`;
 
   try{
-    const text=await callLLM(prompt,8192);
+    const text=await callLLM(prompt,16384);
     const pkg=extractJSON(text);
     S.buildPromptText=pkg.first_build_prompt||'';
     renderBuildOutput(idea,pkg);
   }catch(e){
-    $('modal-loading').innerHTML=`<div style="color:var(--red);font-weight:600">❌ ${esc(e.message)}</div>`;
+    $('modal-loading').innerHTML=`<div style="color:var(--red);font-weight:600;margin-bottom:12px">❌ ${esc(e.message)}</div><button class="modal-action-btn" onclick="openBuild(${id})">↻ Retry</button>`;
   }
 }
 
@@ -1043,12 +1271,12 @@ function renderBuildOutput(idea,pkg){
   $('modal-footer').style.display='flex';
   const out=$('build-output');
   out.style.display='block';
-  out.innerHTML=`
-    ${bs('Stack','#38bdf8',`<div class="build-section-content">${esc(pkg.recommended_stack||'')}</div>`)}
-    ${bs('MVP Features','#4ade80',`<div class="build-section-content" style="white-space:pre-line">${esc(pkg.mvp_scope||'')}</div>`)}
-    ${bs('File Structure','#a78bfa',`<div class="build-code">${esc(pkg.file_structure||'')}</div>`)}
-    ${bs('Key Risks','#fb923c',`<div class="build-section-content" style="white-space:pre-line">${esc(pkg.key_risks||'')}</div>`)}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+  const sections = [
+    pkg.recommended_stack ? bs('Stack','#38bdf8',`<div class="build-section-content">${esc(pkg.recommended_stack)}</div>`) : '',
+    pkg.mvp_scope ? bs('MVP Features','#4ade80',`<div class="build-section-content" style="white-space:pre-line">${esc(pkg.mvp_scope)}</div>`) : '',
+    pkg.file_structure ? bs('File Structure','#a78bfa',`<div class="build-code">${esc(pkg.file_structure)}</div>`) : '',
+    pkg.key_risks ? bs('Key Risks','#fb923c',`<div class="build-section-content" style="white-space:pre-line">${esc(pkg.key_risks)}</div>`) : '',
+    `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px">
         <div style="font-size:8px;font-weight:600;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Monthly Cost</div>
         <div style="font-size:13px;font-weight:600;color:var(--green)">${esc(pkg.estimated_cost||'—')}</div>
@@ -1057,8 +1285,10 @@ function renderBuildOutput(idea,pkg){
         <div style="font-size:8px;font-weight:600;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Time to MVP</div>
         <div style="font-size:13px;font-weight:600;color:var(--yellow)">${esc(pkg.time_to_mvp||'—')}</div>
       </div>
-    </div>
-    ${bs('Build Prompt','#6366f1',`<div class="build-code">${esc(pkg.first_build_prompt||'')}<button class="copy-code-btn" onclick="copyBuildPrompt()">Copy</button></div>`)}`;
+    </div>`,
+    pkg.first_build_prompt ? bs('Build Prompt','#6366f1',`<div class="build-code">${esc(pkg.first_build_prompt)}<button class="copy-code-btn" onclick="copyBuildPrompt()">Copy</button></div>`) : '',
+  ];
+  out.innerHTML = sections.join('');
 }
 
 function bs(l,c,ct){return `<div class="build-section"><div class="build-section-label" style="color:${c}">${l}</div>${ct}</div>`;}

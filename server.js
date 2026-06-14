@@ -83,6 +83,7 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.url.startsWith('/zen-proxy/')) {
+    req.url = req.url.replace('/zen-proxy', '/zen');
     proxyRequest('opencode.ai', 443, req, res, '/zen-proxy');
     return;
   }

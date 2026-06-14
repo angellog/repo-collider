@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/zen-proxy/(.*)", "destination": "/api/proxy" },
+    { "source": "/gh-proxy/(.*)", "destination": "/api/proxy" },
+    { "source": "/(.*)", "destination": "/repo-collider.html" }
+  ]
+}
