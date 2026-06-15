@@ -5,6 +5,8 @@ interface Props {
   elapsed: number;
 }
 
+const STAGE_ICONS = ['🔍', '🔄', '📊', '✨'];
+
 export default function ProgressBar({ stages, currentStage, error, elapsed }: Props) {
   const pct = stages.length > 1 ? Math.round((currentStage / (stages.length - 1)) * 100) : 0;
 
@@ -14,13 +16,23 @@ export default function ProgressBar({ stages, currentStage, error, elapsed }: Pr
         <div id="progress-bar-fill" className={currentStage < 0 ? 'indeterminate' : ''} style={{ width: currentStage < 0 ? '40%' : `${pct}%` }} />
       </div>
       <div id="progress-info">
-        <span id="progress-stage">{error || stages[currentStage] || 'Done'}</span>
+        <span id="progress-stage">
+          {error ? (
+            <span style={{ color: 'var(--red)' }}>⚠ {error}</span>
+          ) : (
+            <>{STAGE_ICONS[currentStage] || ''} {stages[currentStage] || 'Done'}</>
+          )}
+        </span>
         <span id="progress-time">{(elapsed / 1000).toFixed(1)}s</span>
       </div>
       <div id="progress-stages">
-        {stages.map((_, i) => (
-          <div key={i} className={`prog-dot${i < currentStage ? ' done' : ''}${i === currentStage ? ' active' : ''}${error && i === currentStage ? ' error' : ''}`} />
-        ))}
+        {stages.map((s, i) => {
+          const done = i < currentStage;
+          const active = i === currentStage;
+          return (
+            <div key={i} className={`prog-dot${done ? ' done' : ''}${active ? ' active' : ''}${error && active ? ' error' : ''}`} title={s} />
+          );
+        })}
       </div>
     </div>
   );

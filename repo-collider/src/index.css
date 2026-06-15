@@ -14,3 +14,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes progressIndeterminate{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
 @keyframes progPulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes ambientDrift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 0 #6366f140}50%{box-shadow:0 0 20px 4px #6366f160}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes pulse-glow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}

@@ -286,8 +286,10 @@ Respond ONLY with a valid JSON array of 5 objects — no markdown, no code fence
                         </button>
                       </div>
                       <div id="ideas-grid">
-                        {displayIdeas.map(idea => (
-                          <IdeaCard key={idea.id} idea={idea} />
+                        {displayIdeas.map((idea, i) => (
+                          <div key={idea.id} style={{ '--i': i } as React.CSSProperties}>
+                            <IdeaCard idea={idea} />
+                          </div>
                         ))}
                       </div>
                     </>
