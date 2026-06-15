@@ -34,7 +34,7 @@ function AppInner() {
     if (token) {
       authFetch('/api/auth/me', token)
       .then((data: Record<string, unknown>) => {
-          setAuthToken(data.token as string);
+          setAuthToken(token);
           setAuthUser(data.user as { id: string; email: string });
           setAuthed(true);
         })
@@ -102,6 +102,7 @@ function AppInner() {
     const topRepos = shuffled.sort((a, b) => b.stars_raw - a.stars_raw).slice(0, 5).map(r => r.name).join(', ');
 
     const modelName = state.activeModel || provider.models[0]?.id || '';
+    if (!modelName) { showToast('Select a model'); return; }
 
     const systemPrompt = `You are a startup idea generator for the "Repo Collider" engine. You analyze open-source repos and generate novel product ideas by combining them in unexpected ways. Be creative, specific, and practical.`;
 
@@ -135,12 +136,14 @@ Prioritize ideas relevant to ${USER_COUNTRY || 'the user\'s location'} if detect
 Respond ONLY with a valid JSON array of 5 objects — no markdown, no code fences, no extra text.`;
 
     try {
+      setProgress(p => ({ ...p, stage: 1 }));
+
       const text = await callLLM(state.activeProvider, modelName, state.apiKeys, [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ], 8192);
 
-      setProgress(p => ({ ...p, stage: 3 }));
+      setProgress(p => ({ ...p, stage: 2 }));
 
       const parsed = extractJSON(text);
       if (!parsed) throw new Error('Failed to parse LLM response');
@@ -223,7 +226,7 @@ Respond ONLY with a valid JSON array of 5 objects — no markdown, no code fence
       <div id="app">
         <Topbar />
         <div id="main">
-          <Sidebar />
+          <Sidebar onGenerate={generate} />
           <div id="right">
             <div id="filter-bar">
               <input id="search-input" type="text" placeholder="Search ideas…" value={state.searchQuery}

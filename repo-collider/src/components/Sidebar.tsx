@@ -4,7 +4,11 @@ import { fetchTopRepos, fetchStarredRepos, fetchSingleRepo } from '../api';
 import { CAT_ORDER, CAT_COLORS } from '../utils';
 import type { Repo } from '../types';
 
-export default function Sidebar() {
+interface Props {
+  onGenerate?: () => void;
+}
+
+export default function Sidebar({ onGenerate }: Props) {
   const { state, dispatch } = useAppState();
   const [importStatus, setImportStatus] = useState('');
   const [starredUser, setStarredUser] = useState('');
@@ -72,8 +76,8 @@ export default function Sidebar() {
         </div>
 
         <div className="action-row">
-          <button className="btn-gen" disabled={state.generating} onClick={() => {}}>
-            ⚡ Collide
+          <button className="btn-gen" disabled={state.generating} onClick={onGenerate}>
+            {state.generating ? '⏳ Generating…' : '⚡ Collide'}
           </button>
         </div>
 
