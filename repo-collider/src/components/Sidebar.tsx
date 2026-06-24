@@ -6,9 +6,10 @@ import type { Repo } from '../types';
 
 interface Props {
   onGenerate?: () => void;
+  sidebarOpen?: boolean;
 }
 
-export default function Sidebar({ onGenerate }: Props) {
+export default function Sidebar({ onGenerate, sidebarOpen }: Props) {
   const { state, dispatch } = useAppState();
   const [importStatus, setImportStatus] = useState('');
   const [starredUser, setStarredUser] = useState('');
@@ -68,11 +69,17 @@ export default function Sidebar({ onGenerate }: Props) {
   }
 
   return (
-    <div id="left">
+    <div id="left" className={sidebarOpen ? 'open' : ''}>
       <div id="left-top">
         <div id="repo-controls">
           <button id="refresh-repos" onClick={handleRefresh}>↻ Refresh</button>
           <span id="repo-pool-status">{mergedRepos.length} repos</span>
+          {state.readmeProgress.total > 0 && !state.readmeProgress.done && (
+            <span className="enrich-status">Enriching: {state.readmeProgress.fetched}/{state.readmeProgress.total}</span>
+          )}
+          {state.readmeProgress.done && (
+            <span className="enrich-status done">Enriched</span>
+          )}
         </div>
 
         <div className="action-row">

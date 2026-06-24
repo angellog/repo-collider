@@ -2,10 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Idea, BuildPackage } from '../types';
 import { useAppState } from '../state';
 import { callLLM } from '../api';
-import { esc, extractJSON } from '../utils';
+import { extractJSON } from '../utils';
 
-function bs(label: string, color: string, content: string) {
-  return `<div class="build-section"><div class="build-section-label" style="color:${color}">${label}</div>${content}</div>`;
+function BuildSection({ label, color, children }: { label: string; color: string; children: React.ReactNode }) {
+  return (
+    <div className="build-section">
+      <div className="build-section-label" style={{ color }}>{label}</div>
+      {children}
+    </div>
+  );
 }
 
 export default function BuildModal() {
@@ -104,30 +109,51 @@ Respond ONLY with valid JSON — no markdown, no code fences, no extra text:
           )}
           {error && (
             <div style={{ color: 'var(--red)', fontWeight: 600, marginBottom: 12, padding: 20 }}>
-              ❌ {esc(error)}
+              ❌ {error}
               <button className="modal-action-btn" style={{ marginTop: 12, display: 'block' }} onClick={() => idea && generateBuild(idea)}>↻ Retry</button>
             </div>
           )}
           {!loading && !error && pkg && (
-            <div id="build-output" style={{ display: 'block' }} dangerouslySetInnerHTML={{
-              __html: [
-                pkg.recommended_stack ? bs('Stack', '#38bdf8', `<div class="build-section-content">${esc(pkg.recommended_stack)}</div>`) : '',
-                pkg.mvp_scope ? bs('MVP Features', '#4ade80', `<div class="build-section-content" style="white-space:pre-line">${esc(pkg.mvp_scope)}</div>`) : '',
-                pkg.file_structure ? bs('File Structure', '#a78bfa', `<div class="build-code">${esc(pkg.file_structure)}</div>`) : '',
-                pkg.key_risks ? bs('Key Risks', '#fb923c', `<div class="build-section-content" style="white-space:pre-line">${esc(pkg.key_risks)}</div>`) : '',
-                `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
-                  <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px">
-                    <div style="font-size:8px;font-weight:600;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Monthly Cost</div>
-                    <div style="font-size:13px;font-weight:600;color:var(--green)">${esc(pkg.estimated_cost || '—')}</div>
+            <div id="build-output" style={{ display: 'block' }}>
+              {pkg.recommended_stack && (
+                <BuildSection label="Stack" color="#38bdf8">
+                  <div className="build-section-content">{pkg.recommended_stack}</div>
+                </BuildSection>
+              )}
+              {pkg.mvp_scope && (
+                <BuildSection label="MVP Features" color="#4ade80">
+                  <div className="build-section-content" style={{ whiteSpace: 'pre-line' }}>{pkg.mvp_scope}</div>
+                </BuildSection>
+              )}
+              {pkg.file_structure && (
+                <BuildSection label="File Structure" color="#a78bfa">
+                  <div className="build-code">{pkg.file_structure}</div>
+                </BuildSection>
+              )}
+              {pkg.key_risks && (
+                <BuildSection label="Key Risks" color="#fb923c">
+                  <div className="build-section-content" style={{ whiteSpace: 'pre-line' }}>{pkg.key_risks}</div>
+                </BuildSection>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 14 }}>
+                  <div style={{ fontSize: 8, fontWeight: 600, color: 'var(--dim)', letterSpacing: 1, textTransform: 'uppercase' as const, marginBottom: 4 }}>Monthly Cost</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--green)' }}>{pkg.estimated_cost || '—'}</div>
+                </div>
+                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 14 }}>
+                  <div style={{ fontSize: 8, fontWeight: 600, color: 'var(--dim)', letterSpacing: 1, textTransform: 'uppercase' as const, marginBottom: 4 }}>Time to MVP</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--yellow)' }}>{pkg.time_to_mvp || '—'}</div>
+                </div>
+              </div>
+              {pkg.first_build_prompt && (
+                <BuildSection label="Build Prompt" color="#6366f1">
+                  <div className="build-code">
+                    {pkg.first_build_prompt}
+                    <button className="copy-code-btn" onClick={copyPrompt}>Copy</button>
                   </div>
-                  <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px">
-                    <div style="font-size:8px;font-weight:600;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Time to MVP</div>
-                    <div style="font-size:13px;font-weight:600;color:var(--yellow)">${esc(pkg.time_to_mvp || '—')}</div>
-                  </div>
-                </div>`,
-                pkg.first_build_prompt ? bs('Build Prompt', '#6366f1', `<div class="build-code">${esc(pkg.first_build_prompt)}<button class="copy-code-btn" onclick="(${copyPrompt.toString()})()">Copy</button></div>`) : '',
-              ].join('')
-            }} />
+                </BuildSection>
+              )}
+            </div>
           )}
         </div>
         {pkg && (

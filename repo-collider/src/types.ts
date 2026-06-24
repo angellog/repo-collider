@@ -99,10 +99,7 @@ export interface AppState {
   starredUser: string;
   buildPromptText: string;
   searchQuery: string;
+  readmeSummaries: Record<string, string>;
+  readmeProgress: { fetched: number; total: number; done: boolean };
 }
 
-export interface AuthState {
-  token: string;
-  user: { id: string; email: string } | null;
-  authed: boolean;
-}

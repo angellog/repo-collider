@@ -26,12 +26,6 @@ export const DIFF_COLORS: Record<string, string> = {
   Weekend: '#4ade80', '1 Month': '#38bdf8', '6 Months': '#facc15', '1 Year': '#fb923c',
 };
 
-export function esc(s: string): string {
-  const d = document.createElement('div');
-  d.appendChild(document.createTextNode(s));
-  return d.innerHTML;
-}
-
 export function formatStars(n: number): string {
   if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';

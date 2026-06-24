@@ -5,11 +5,26 @@ import { ghItemToRepo } from './utils';
 const REPO_CACHE_KEY = 'rc-gh-repos-v2';
 const CACHE_TTL = 4 * 60 * 60 * 1000;
 
+const isLocal = typeof location !== 'undefined' &&
+  (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+
+export async function ghFetch(path: string): Promise<Response> {
+  if (!isLocal) {
+    try {
+      const res = await fetch(`/gh-proxy${path}`);
+      if (res.ok) return res;
+    } catch { /* proxy unavailable */ }
+  }
+  return fetch(`https://api.github.com${path}`, {
+    headers: { 'Accept': 'application/vnd.github.v3+json' },
+  });
+}
+
 export async function fetchTopRepos(force = false): Promise<Repo[]> {
   const cached = getCachedRepos();
   if (cached && !force) return cached;
 
-  const res = await fetch('/gh-proxy/search/repositories?q=stars:>1000&sort=stars&order=desc&per_page=100');
+  const res = await ghFetch('/search/repositories?q=stars:>1000&sort=stars&order=desc&per_page=100');
   if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
 
   const data = await res.json() as Record<string, unknown>;
@@ -29,7 +44,7 @@ export async function fetchTopRepos(force = false): Promise<Repo[]> {
 }
 
 export async function fetchStarredRepos(username: string): Promise<Repo[]> {
-  const res = await fetch(`/gh-proxy/users/${encodeURIComponent(username)}/starred?per_page=100&sort=created&direction=desc`);
+  const res = await ghFetch(`/users/${encodeURIComponent(username)}/starred?per_page=100&sort=created&direction=desc`);
   if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
   const items = await res.json() as Record<string, unknown>[];
   return (items || []).map((item, i) => {
@@ -42,7 +57,7 @@ export async function fetchStarredRepos(username: string): Promise<Repo[]> {
 export async function fetchSingleRepo(url: string): Promise<Repo> {
   const match = url.match(/github\.com\/([\w.-]+\/[\w.-]+)/i);
   if (!match) throw new Error('Invalid GitHub URL');
-  const res = await fetch(`/gh-proxy/repos/${match[1]}`);
+  const res = await ghFetch(`/repos/${match[1]}`);
   if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
   const item = await res.json() as Record<string, unknown>;
   const r = ghItemToRepo(item, 'manual');
@@ -125,19 +140,29 @@ async function geminiCall(endpoint: string, model: string, messages: unknown[], 
   return { ok: res.ok, status: res.status, d };
 }
 
+function resolveEndpoint(endpoint: string): string {
+  if (!isLocal) return endpoint;
+  if (endpoint.startsWith('/zen-proxy')) {
+    return endpoint.replace('/zen-proxy', 'https://opencode.ai/zen');
+  }
+  return endpoint;
+}
+
 export async function callLLM(providerId: string, modelId: string, apiKeys: Record<string, string>, messages: unknown[], maxTokens = 8192): Promise<string> {
   const provider = getProvider(providerId);
   if (!provider) throw new Error(`Unknown provider: ${providerId}`);
   const key = getKey(apiKeys, providerId);
   if (!key) throw new Error('API key required');
 
+  const endpoint = resolveEndpoint(provider.endpoint);
+
   let res: { ok: boolean; status: number; d: Record<string, unknown> };
   if (provider.type === 'anthropic') {
-    res = await anthropicCall(provider.endpoint, modelId, messages, key, maxTokens);
+    res = await anthropicCall(endpoint, modelId, messages, key, maxTokens);
   } else if (provider.type === 'gemini') {
-    res = await geminiCall(provider.endpoint, modelId, messages, key, maxTokens);
+    res = await geminiCall(endpoint, modelId, messages, key, maxTokens);
   } else {
-    res = await openaiCall(provider.endpoint, modelId, messages, key, maxTokens);
+    res = await openaiCall(endpoint, modelId, messages, key, maxTokens);
   }
 
   if (!res.ok) {
@@ -192,14 +217,3 @@ export async function register(email: string, password: string): Promise<{ token
   return data;
 }
 
-export async function syncIdeas(token: string, ideas: unknown[]): Promise<void> {
-  await authFetch('/api/ideas/sync', token, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ideas }),
-  });
-}
-
-export async function loadRemoteIdeas(token: string): Promise<unknown[]> {
-  const data = await authFetch('/api/ideas/sync', token);
-  return (data.ideas as unknown[]) || [];
-}

@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
 import type { AppState, Idea, Repo } from './types';
 import { getLocalStorage, setLocalStorage } from './utils';
+import { PROVIDERS } from './providers';
 
 type Action =
   | { type: 'SET_IDEAS'; ideas: Idea[] }
@@ -20,8 +21,8 @@ type Action =
   | { type: 'SET_CACHED_REPOS'; data: { ts: number; repos: Repo[] } | null }
   | { type: 'SET_BUILD_PROMPT'; text: string }
   | { type: 'SET_SEARCH'; query: string }
-  | { type: 'SET_CURRENT_VIEW'; view: AppState['currentView'] }
-  | { type: 'LOAD_STATE'; state: Partial<AppState> };
+  | { type: 'SET_README_SUMMARIES'; summaries: Record<string, string> }
+  | { type: 'SET_README_PROGRESS'; progress: { fetched: number; total: number; done: boolean } };
 
 const LS_KEYS = {
   ideas: 'rc-ideas',
@@ -50,6 +51,10 @@ function saveIds(ids: Set<number>) {
   }
 }
 
+function validateProvider(id: string): string {
+  return PROVIDERS.some(p => p.id === id) ? id : 'anthropic';
+}
+
 function initState(): AppState {
   return {
     ideas: getLocalStorage<Idea[]>(LS_KEYS.ideas, []),
@@ -59,7 +64,7 @@ function initState(): AppState {
     currentView: 'collider',
     generating: false,
     apiKeys: getLocalStorage<Record<string, string>>(LS_KEYS.apiKeys, {}),
-    activeProvider: getLocalStorage<string>(LS_KEYS.activeProvider, 'openzen'),
+    activeProvider: validateProvider(getLocalStorage<string>(LS_KEYS.activeProvider, 'anthropic')),
     activeModel: getLocalStorage<string>(LS_KEYS.activeModel, ''),
     repoPool: [],
     starredRepos: getLocalStorage<Repo[]>(LS_KEYS.starredRepos, []),
@@ -68,6 +73,8 @@ function initState(): AppState {
     starredUser: '',
     buildPromptText: '',
     searchQuery: '',
+    readmeSummaries: {},
+    readmeProgress: { fetched: 0, total: 0, done: false },
   };
 }
 
@@ -139,8 +146,10 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, buildPromptText: action.text };
     case 'SET_SEARCH':
       return { ...state, searchQuery: action.query };
-    case 'SET_CURRENT_VIEW':
-      return { ...state, currentView: action.view };
+    case 'SET_README_SUMMARIES':
+      return { ...state, readmeSummaries: { ...state.readmeSummaries, ...action.summaries } };
+    case 'SET_README_PROGRESS':
+      return { ...state, readmeProgress: action.progress };
     default:
       return state;
   }

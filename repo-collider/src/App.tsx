@@ -1,8 +1,9 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, Component, type ReactNode, type ErrorInfo } from 'react';
 import { AppProvider, useAppState } from './state';
 import { fetchTopRepos, callLLM, authFetch } from './api';
 import { PROVIDERS } from './providers';
 import { extractJSON, getScopeMeta, USER_COUNTRY, getLocalStorage, setLocalStorage } from './utils';
+import { startReadmeEnrichment } from './readme';
 import Topbar from './components/Topbar';
 import Sidebar from './components/Sidebar';
 import IdeaCard from './components/IdeaCard';
@@ -16,20 +17,42 @@ import { showToast } from './components/toast-fn';
 import type { Idea, IdeaGen } from './types';
 import './App.css';
 
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  componentDidCatch(error: Error, info: ErrorInfo) { console.error('App error:', error, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="error-boundary">
+          <div className="empty-icon">⚠️</div>
+          <div className="empty-title">Something went wrong</div>
+          <div className="empty-sub">{this.state.error.message}</div>
+          <button className="btn-gen" style={{ marginTop: 16, width: 200 }} onClick={() => this.setState({ error: null })}>Try Again</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const GEN_STAGES = ['Analyzing repo pool', 'Permuting combinations', 'Scoring ideas', 'Finalizing'];
 
 function AppInner() {
   const { state, dispatch } = useAppState();
-  const [authed, setAuthed] = useState(false);
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const [authed, setAuthed] = useState(isLocal);
   const [authToken, setAuthToken] = useState('');
-  const [, setAuthUser] = useState<{ id: string; email: string } | null>(null);
+  const [authUser, setAuthUser] = useState<{ id: string; email: string } | null>(null);
   const [progress, setProgress] = useState({ stage: -1, stages: GEN_STAGES, elapsed: 0, error: null as string | null });
-  const [generating, setGenerating] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [reposLoading, setReposLoading] = useState(authed);
   const timerRef = useRef<number | undefined>(undefined);
   const [ideasInitialized, setIdeasInitialized] = useState(false);
 
   // Check auth on mount
   useEffect(() => {
+    if (isLocal) return;
     const token = getLocalStorage<string>('rc-auth-token', '');
     if (token) {
       authFetch('/api/auth/me', token)
@@ -43,16 +66,29 @@ function AppInner() {
           showToast('Session expired. Please login again.');
         });
     }
-  }, []);
+  }, [isLocal]);
 
   // Load repos on mount
   useEffect(() => {
     if (!authed) return;
     fetchTopRepos().then(repos => {
       dispatch({ type: 'SET_REPO_POOL', repos: repos.slice(0, 100) });
-    }).catch(() => {});
+    }).catch(e => console.error('Failed to load repos:', e))
+    .finally(() => setReposLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed]);
+
+  // Enrich repos with README summaries
+  useEffect(() => {
+    if (state.repoPool.length === 0) return;
+    const controller = startReadmeEnrichment(
+      state.repoPool,
+      (fetched, total, done) => dispatch({ type: 'SET_README_PROGRESS', progress: { fetched, total, done } }),
+      (summaries) => dispatch({ type: 'SET_README_SUMMARIES', summaries }),
+    );
+    return () => controller.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.repoPool]);
 
   // Load remote ideas after auth
   useEffect(() => {
@@ -71,7 +107,7 @@ function AppInner() {
 
   // Progress timer
   useEffect(() => {
-    if (!generating) {
+    if (!state.generating) {
       clearInterval(timerRef.current);
       return;
     }
@@ -81,23 +117,26 @@ function AppInner() {
     }, 100);
     return () => clearInterval(timerRef.current);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [generating]);
+  }, [state.generating]);
 
   async function generate() {
     const provider = PROVIDERS.find(p => p.id === state.activeProvider);
-    if (!provider) { showToast('Select a provider'); return; }
+    if (!provider) { showToast('Select a provider from the Brain dropdown'); return; }
     const key = (state.apiKeys[state.activeProvider] || '').trim();
-    if (!key || key.length < 8) { showToast('Enter a valid API key'); return; }
+    if (!key || key.length < 8) { showToast(`Enter your ${provider.name} API key (${provider.placeholder})`); return; }
 
     const allRepos = [...state.repoPool, ...state.starredRepos, ...state.manualRepos];
-    if (allRepos.length < 3) { showToast('Need at least 3 repos in the pool'); return; }
+    if (allRepos.length < 3) { showToast(`Need at least 3 repos (currently ${allRepos.length}) — wait for repos to load`); return; }
 
-    setGenerating(true);
     dispatch({ type: 'SET_GENERATING', generating: true });
     setProgress({ stage: 0, stages: GEN_STAGES, elapsed: 0, error: null });
 
     const shuffled = [...allRepos].sort(() => Math.random() - 0.5).slice(0, 30);
-    const repoList = shuffled.map(r => `- ${r.name} ★${r.stars} (${r.cat}) ${r.desc ? ': ' + r.desc.slice(0, 80) : ''}`).join('\n');
+    const repoList = shuffled.map(r => {
+      const summary = state.readmeSummaries[r.name];
+      const desc = summary || (r.desc ? r.desc.slice(0, 80) : '');
+      return `- ${r.name} ★${r.stars} (${r.cat})${desc ? ': ' + desc : ''}`;
+    }).join('\n');
     const cats = [...new Set(shuffled.map(r => r.cat))].slice(0, 6).join(', ');
     const topRepos = shuffled.sort((a, b) => b.stars_raw - a.stars_raw).slice(0, 5).map(r => r.name).join(', ');
 
@@ -182,7 +221,6 @@ Respond ONLY with a valid JSON array of 5 objects — no markdown, no code fence
       showToast(`Error: ${msg}`);
     }
 
-    setGenerating(false);
     dispatch({ type: 'SET_GENERATING', generating: false });
   }
 
@@ -194,7 +232,13 @@ Respond ONLY with a valid JSON array of 5 objects — no markdown, no code fence
     showToast('🎉 Welcome!');
   }
 
-
+  function handleLogout() {
+    localStorage.removeItem('rc-auth-token');
+    setAuthToken('');
+    setAuthUser(null);
+    setAuthed(false);
+    showToast('Logged out');
+  }
 
   // Filter + sort ideas
   const displayIdeas = useMemo(() => {
@@ -223,11 +267,12 @@ Respond ONLY with a valid JSON array of 5 objects — no markdown, no code fence
 
   return (
     <>
+      <a href="#right" className="skip-link">Skip to content</a>
       <div id="app">
-        <Topbar />
+        <Topbar onToggleSidebar={() => setSidebarOpen(v => !v)} user={authUser} onLogout={handleLogout} />
         <div id="main">
-          <Sidebar onGenerate={generate} />
-          <div id="right">
+          <Sidebar onGenerate={generate} sidebarOpen={sidebarOpen} />
+          <div id="right" role="main">
             <div id="filter-bar">
               <input id="search-input" type="text" placeholder="Search ideas…" value={state.searchQuery}
                 onChange={e => dispatch({ type: 'SET_SEARCH', query: e.target.value })} />
@@ -264,19 +309,19 @@ Respond ONLY with a valid JSON array of 5 objects — no markdown, no code fence
               </div>
             </div>
 
-            {generating && (
+            {state.generating && (
               <ProgressBar stages={progress.stages} currentStage={progress.stage} error={progress.error} elapsed={progress.elapsed} />
             )}
 
             <div id="ideas-wrap">
               {state.currentView === 'collider' && (
                 <>
-                  {displayIdeas.length === 0 && !generating && (
+                  {displayIdeas.length === 0 && !state.generating && (
                     <div className="empty-state">
-                      <div className="empty-icon">⚡</div>
-                      <div className="empty-title">No ideas yet</div>
-                      <div className="empty-sub">{poolRepos.length >= 3 ? 'Click ⚡ Collide in the sidebar to generate ideas' : 'Add repos to the pool first'}</div>
-                      {poolRepos.length >= 3 && (
+                      <div className="empty-icon">{reposLoading ? '⏳' : '⚡'}</div>
+                      <div className="empty-title">{reposLoading ? 'Loading repos…' : 'No ideas yet'}</div>
+                      <div className="empty-sub">{reposLoading ? 'Fetching top GitHub repositories' : poolRepos.length >= 3 ? 'Click ⚡ Collide in the sidebar to generate ideas' : 'Add repos to the pool first'}</div>
+                      {!reposLoading && poolRepos.length >= 3 && (
                         <button className="btn-gen" style={{ marginTop: 16, width: 200 }} onClick={generate}>⚡ Collide</button>
                       )}
                     </div>
@@ -284,8 +329,8 @@ Respond ONLY with a valid JSON array of 5 objects — no markdown, no code fence
                   {displayIdeas.length > 0 && (
                     <>
                       <div style={{ display: 'flex', gap: 5, padding: '0 14px 8px' }}>
-                        <button className="btn-gen" onClick={generate} disabled={generating}>
-                          {generating ? 'Generating…' : '⚡ Collide'}
+                        <button className="btn-gen" onClick={generate} disabled={state.generating}>
+                          {state.generating ? 'Generating…' : '⚡ Collide'}
                         </button>
                       </div>
                       <div id="ideas-grid">
@@ -313,9 +358,11 @@ Respond ONLY with a valid JSON array of 5 objects — no markdown, no code fence
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppInner />
-      <Toast />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <AppInner />
+        <Toast />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
